@@ -1,2 +1,86 @@
-fmod ACTOR is
-endfm
+mod ACTOR is protecting NAT . protecting LIST{Nat} .
+	protecting QID-LIST .
+
+	--- sorts List QidList .
+	sorts Reference ReferenceList .
+	sorts Actor ActorList .
+	sorts Configuration NatConfiguration .
+	
+	--- We want to be able to have a list of references
+	subsort Reference < Qid .
+	subsort ReferenceList < QidList .
+	subsort Actor < ActorList < QidList .
+
+
+	--- identities
+	op Null : -> Nat [ctor] .
+	op mtRef : -> Reference [ctor] .
+	--- op mtConf : -> Configuration .
+
+	---
+	op _::_->_ : Nat Nat Nat -> Reference [ctor] .
+	
+	--- i = id, sn = seqnum, r = refs, dr = deactivated_refs, o = owners, ro = released_owners, m = memory, oa = onack
+	op < i: _ | sn: _ | r: _ | dr: _ | o: _ | ro: _ | m: _ | oa: _ > : Nat Nat ReferenceList ReferenceList ReferenceList 
+															ReferenceList ReferenceList ReferenceList ->  Actor [ctor] .
+	op _$_ : Actor Actor -> ActorList [ctor] .
+
+	--- Configuration is a set of actors together
+	op { _} : ActorList -> Configuration [ctor] .
+	
+	--- NatConfiguration also gives us global variables for actor ID and reference ID
+	--- this allows us to have a unique name for every actor and reference
+	--- TODO: This also needs to store the next reference ID
+	op _||_ : Nat Configuration -> NatConfiguration .
+
+	--- Methods for NatConfiguration
+	op getNextId(_) : NatConfiguration -> Nat .
+
+	--- Methods Declarations an Actor has
+	--- Actor Constructor
+	op newActor(_,_) : Nat Nat -> Actor [ctor] .
+	--- Spawn: Allows an actor A to spawn a child
+	op spawn(_) : Actor -> Actor [ctor] .
+	--- createRef: Creates a reference C -> B if given A -> B and A -> C
+	op createRef(_,_) : Reference Reference -> Actor .
+	--- receive: Allows an actor A to recieve a new reference
+	op receive(_) : Reference -> Actor .
+	--- release: Allows an actor to release an input reference
+	op release(_) : Reference -> Actor .
+	--- updateInfo: Called by actor A release an actor B to update local variables and send a release
+	--- request to actor B
+	op updateInfo(_) : Nat -> Actor .
+	--- releaseRecv: Called by an actor B which received a recieve request from A
+	--- this will release references in B and send an ack to A
+	op releaseRecv(_,_,_,_) : Nat Nat ReferenceList ReferenceList -> Actor .
+	--- ackRelease: This is sent by actor B to A as an ack
+	op ackRelease(_) : Nat -> Actor .
+
+	--- Variable declarations
+	vars Conf : Configuration .
+	vars N M : Nat .
+	
+	--- implementations for NatConfiguration
+	eq getNextId(N || Conf) = N + 1 .
+
+	--- implementations for Actor
+	--- eq newActor(N, M) = < i: N | sn: 0 | r: newRef() | dr: _ | o: _ | ro: _ | m: _ | oa: _ >
+
+	---
+	--- rl [newActor] : N || { Conf } => N + 1 || { newActor(N + 1, M) Conf } .
+
+endm
+
+--- test configuration 
+red { A:ActorList B:ActorList } .
+red { < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > } .
+red 0 || { A:ActorList } .
+
+--- test get next id
+red getNextId(0 || { A:ActorList B:ActorList }) .
+
+--- test reference list
+red (0 :: 0 -> 0) (1 :: 1 -> 0) .
+
+--- test Actor/ActorList
+red < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > $ < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > .
