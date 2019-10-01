@@ -26,15 +26,18 @@ mod ACTOR is protecting NAT . protecting LIST{Nat} .
 	op _$_ : Actor Actor -> ActorList [ctor] .
 
 	--- Configuration is a set of actors together
-	op { _} : ActorList -> Configuration [ctor] .
+	--- TODO: Does this need to have 2 actorlists? or is it because
+	--- We can concatenate actorlists via QID-LIST do we still need to wory about this?
+	op { _ } : ActorList -> Configuration [ctor] .
 	
 	--- NatConfiguration also gives us global variables for actor ID and reference ID
 	--- this allows us to have a unique name for every actor and reference
-	--- TODO: This also needs to store the next reference ID
-	op _||_ : Nat Configuration -> NatConfiguration .
+	--- NextActorID NextReferenceID Configuration -> NatConfiguration
+	op ___ : Nat Nat Configuration -> NatConfiguration [ctor] .
 
 	--- Methods for NatConfiguration
-	op getNextId(_) : NatConfiguration -> Nat .
+	op getNextActorId(_) : NatConfiguration -> Nat .
+	op getNextRefId(_) : NatConfiguration -> Nat .
 
 	--- Methods Declarations an Actor has
 	--- Actor Constructor
@@ -61,7 +64,8 @@ mod ACTOR is protecting NAT . protecting LIST{Nat} .
 	vars N M : Nat .
 	
 	--- implementations for NatConfiguration
-	eq getNextId(N || Conf) = N + 1 .
+	eq getNextActorId(N M Conf) = N + 1 .
+	eq getNextRefId(N,M ^ Conf) = M + 1 .
 
 	--- implementations for Actor
 	--- eq newActor(N, M) = < i: N | sn: 0 | r: newRef() | dr: _ | o: _ | ro: _ | m: _ | oa: _ >
@@ -72,15 +76,21 @@ mod ACTOR is protecting NAT . protecting LIST{Nat} .
 endm
 
 --- test configuration 
-red { A:ActorList B:ActorList } .
-red { < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > } .
-red 0 || { A:ActorList } .
+--- red { A:ActorList B:ActorList } .
+--- red { < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > } .
+--- red 0 0 || { A:ActorList } .
+
+--- test NatConfiguration
+--- red 15,5 |^| { A:ActorList B:ActorList } .
 
 --- test get next id
-red getNextId(0 || { A:ActorList B:ActorList }) .
+red { A:ActorList B:ActorList }.
+red getNextActorId(15 5 { A:ActorList }) .
+--- red getNextRefId(15,5 ^ { A:ActorList B:ActorList }) .
+
 
 --- test reference list
-red (0 :: 0 -> 0) (1 :: 1 -> 0) .
+--- red (0 :: 0 -> 0) (1 :: 1 -> 0) .
 
 --- test Actor/ActorList
-red < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > $ < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > .
+--- red < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > $ < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > .
