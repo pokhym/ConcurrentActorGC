@@ -40,8 +40,9 @@ mod ACTOR is protecting NAT . protecting LIST{Nat} .
 	op getNextRefId(_) : NatConfiguration -> Nat .
 
 	--- Methods Declarations an Actor has
-	--- Actor Constructor
-	op newActor(_,_) : Nat Nat -> Actor [ctor] .
+	--- Actor Constructor: ActorID1 to be created, ActorID2 of first reference, next unique refID
+	--- NOTE: refID :: ActorID1 -> ActorID2
+	op newActor(_,_,_) : Nat Nat Nat -> Actor [ctor] .
 	--- Spawn: Allows an actor A to spawn a child
 	op spawn(_) : Actor -> Actor [ctor] .
 	--- createRef: Creates a reference C -> B if given A -> B and A -> C
@@ -59,19 +60,23 @@ mod ACTOR is protecting NAT . protecting LIST{Nat} .
 	--- ackRelease: This is sent by actor B to A as an ack
 	op ackRelease(_) : Nat -> Actor .
 
+	--- Top Level G functions
+	--- TODO: How do we address getting more than one actor?
+	op newActorList(_) : Nat{List} -> ActorList [ctor] .
+
 	--- Variable declarations
 	vars Conf : Configuration .
-	vars N M : Nat .
+	vars A B X ActID RefID : Nat .
 	
 	--- implementations for NatConfiguration
 	eq getNextActorId(N M Conf) = N + 1 .
 	eq getNextRefId(N,M ^ Conf) = M + 1 .
 
 	--- implementations for Actor
-	--- eq newActor(N, M) = < i: N | sn: 0 | r: newRef() | dr: _ | o: _ | ro: _ | m: _ | oa: _ >
+	eq newActor(A, B, X) = < i: A | sn: 0 | r: X :: A -> B | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | oa: mtRef > .
 
 	---
-	--- rl [newActor] : N || { Conf } => N + 1 || { newActor(N + 1, M) Conf } .
+	rl [newActor] :  ActID || { Conf } => N + 1 || { newActor(N + 1, M) Conf } .
 
 endm
 
