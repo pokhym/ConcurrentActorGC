@@ -1,101 +1,203 @@
-mod ACTOR is protecting NAT . protecting LIST{Nat} .
+fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 	protecting QID-LIST .
-
+	--- ########## SORTS ##########
 	--- sorts List QidList .
 	sorts Reference ReferenceList .
+	sorts Msg MsgList MsgType .
 	sorts Actor ActorList .
-	sorts Configuration NatConfiguration .
+	sorts Pred .
 	
+	--- ########## SUBSORTS ##########
 	--- We want to be able to have a list of references
-	subsort Reference < Qid .
-	subsort ReferenceList < QidList .
-	subsort Actor < ActorList < QidList .
+	--- subsort Reference Msg Actor < Qid < ReferenceList MsgList ActorList < QidList . 
+	subsort Reference < ReferenceList .
+	subsort Msg < MsgList .
+	subsort Actor < ActorList .
 
-
+	--- ########## OPS ##########
 	--- identities
-	op Null : -> Nat [ctor] .
+	--- op Null : -> Nat [ctor] .
+	op mtActor : -> Actor [ctor] .
+	op mtActorList : -> ActorList [ctor] .
 	op mtRef : -> Reference [ctor] .
+	op mtRefList : -> ReferenceList [ctor] .
+	op mtMsg : -> Msg [ctor] .
+	op mtMsgList : -> MsgList [ctor] .
 	--- op mtConf : -> Configuration .
+	op tt : -> Pred [ctor] .
+	op ff : -> Pred [ctor] .
 
-	---
-	op _::_->_ : Nat Nat Nat -> Reference [ctor] .
+	--- Bool
+	--- Message Types
+	op App : -> MsgType .
+	op ReleaseReq : -> MsgType .
+	op AckRelease : -> MsgType .
+
+	--- References
+	op _::_->_ : Nat Nat Nat -> Reference [ctor assoc id: mtRef] .
+	--- op __ : Reference Reference -> ReferenceList [ctor] .
+	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor assoc id: mtRefList] .
 	
 	--- i = id, sn = seqnum, r = refs, dr = deactivated_refs, o = owners, ro = released_owners, m = memory, oa = onack
 	op < i: _ | sn: _ | r: _ | dr: _ | o: _ | ro: _ | m: _ | oa: _ > : Nat Nat ReferenceList ReferenceList ReferenceList 
-															ReferenceList ReferenceList ReferenceList ->  Actor [ctor] .
-	op _$_ : Actor Actor -> ActorList [ctor] .
-
-	--- Configuration is a set of actors together
-	--- TODO: Does this need to have 2 actorlists? or is it because
-	--- We can concatenate actorlists via QID-LIST do we still need to wory about this?
-	op { _ } : ActorList -> Configuration [ctor] .
-	
-	--- NatConfiguration also gives us global variables for actor ID and reference ID
-	--- this allows us to have a unique name for every actor and reference
-	--- NextActorID NextReferenceID Configuration -> NatConfiguration
-	op ___ : Nat Nat Configuration -> NatConfiguration [ctor] .
-
-	--- Methods for NatConfiguration
-	op getNextActorId(_) : NatConfiguration -> Nat .
-	op getNextRefId(_) : NatConfiguration -> Nat .
+															ReferenceList ReferenceList ReferenceList ->  Actor [ctor assoc id: mtActorList] .
+	op _,_ : ActorList ActorList -> ActorList [ctor assoc id: mtActorList] .
+	--- Messages
+	--- The three types are App, Req_Release, and Ack_Release. 
+	--- I guess there should be another kind of message for asking an actor to take a snapshot?
+	--- An App message can do any combination of the following things all at once
+	--- - Add all references in the message to the target actor’s state; AND
+	--- - Create new App messages, each of which may contain a set of new references; AND
+	--- - Spawn new actors; AND
+	--- - Create new Req_Release messages.
+	--- TODO: This means that we need newActor to handle cases where ActorList is MT
+	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor id: mtMsg] .
+	op _,_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
 
 	--- Methods Declarations an Actor has
 	--- Actor Constructor: ActorID1 to be created, ActorID2 of first reference, next unique refID
 	--- NOTE: refID :: ActorID1 -> ActorID2
-	op newActor(_,_,_) : Nat Nat Nat -> Actor [ctor] .
-	--- Spawn: Allows an actor A to spawn a child
-	op spawn(_) : Actor -> Actor [ctor] .
+	op newActor(_,_) : Nat ReferenceList -> Actor [ctor] .
+	--- Spawn: Allows an actor A to spawn a child, this is just a renaming of newActor
+	--- to spawn multiple actors refer to the rules in G
+	op spawn(_,_) : Nat ReferenceList -> ActorList .
 	--- createRef: Creates a reference C -> B if given A -> B and A -> C
-	op createRef(_,_) : Reference Reference -> Actor .
+	op createRef(_,_,_) : Nat Reference Reference -> Reference .
 	--- receive: Allows an actor A to recieve a new reference
-	op receive(_) : Reference -> Actor .
-	--- release: Allows an actor to release an input reference
-	op release(_) : Reference -> Actor .
-	--- updateInfo: Called by actor A release an actor B to update local variables and send a release
-	--- request to actor B
-	op updateInfo(_) : Nat -> Actor .
+	op receive(_,_) : Actor Reference -> Actor .
+	--- release: Allows an actor to release an input reference, this only edits deactivated_refs
+	--- updateInfo will be called alongside release in the relese rule which will also do error checking to see if
+	--- the input reference is actually in the Actor.refs
+	op release(_,_) : Actor Reference -> Actor .
+	--- updateInfo: Called by actor A release an actor B to update local variables
+	--- the actual release message will be created and sent via the rule into the soup
+	op updateInfo(_,_) : Actor Nat -> Actor .
 	--- releaseRecv: Called by an actor B which received a recieve request from A
 	--- this will release references in B and send an ack to A
 	op releaseRecv(_,_,_,_) : Nat Nat ReferenceList ReferenceList -> Actor .
 	--- ackRelease: This is sent by actor B to A as an ack
 	op ackRelease(_) : Nat -> Actor .
 
-	--- Top Level G functions
-	--- TODO: How do we address getting more than one actor?
-	op newActorList(_) : Nat{List} -> ActorList [ctor] .
+	--- ########## HELPER OPS ##########
+	--- getRefsTargetEquiv(B, x : A -> B) = ff, getRefsTargetEquiv(B, x : A -> C) = tt
+	op getRefsTargetEquiv(_,_) : Nat Reference -> Pred .
+	--- getRefsTarget(B, (x : A -> B), (y : C -> B), (z : D -> E)) returns x, y
+	op getRefsTarget(_,_) : Nat ReferenceList -> ReferenceList .
+	--- removeRefsFromRefList
+	op removeRefsFromRefList(_,_) : ReferenceList ReferenceList -> ReferenceList .
 
-	--- Variable declarations
-	vars Conf : Configuration .
-	vars A B X ActID RefID : Nat .
-	
-	--- implementations for NatConfiguration
-	eq getNextActorId(N M Conf) = N + 1 .
-	eq getNextRefId(N,M ^ Conf) = M + 1 .
+	--- ########## VARS ##########
+	vars A B C D E F G : Nat .
+	vars AcA : Actor .
+	vars AcLiA : ActorList .
+	vars MsgA : Msg .
+	vars MsgTA : MsgType .
+	vars MsgLiA : MsgList .
+	vars RefA RefB : Reference .
+	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF : ReferenceList . 
 
+	--- ########## EQS ##########
 	--- implementations for Actor
-	eq newActor(A, B, X) = < i: A | sn: 0 | r: X :: A -> B | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | oa: mtRef > .
+	eq newActor(A, RefLiA) = < i: A | sn: 0 | r: RefLiA | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | oa: mtRef > .
+	--- implementations for Spawn
+	eq spawn(A, RefLiA) = newActor(A, RefLiA) .
+	--- implementations for createRef
+	eq createRef(A , B :: C -> D , E :: F -> G) = A :: G -> D .
+	--- implementation of receive
+	eq receive(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | oa: RefLiF >, RefA) =
+		< i: A | sn: B | r: RefA , RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | oa: RefLiF > .
+	--- implementation of release
+	eq release(< i: A | sn: B | r: RefA, RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | oa: RefLiF >, RefA) = 
+		< i: A | sn: B | r: RefLiA | dr: RefA, RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | oa: RefLiF > .
+	--- implementation of update info
+	eq updateInfo(< i: A | sn: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | oa: RefLiF >, B) =
+		< i: A | sn: C | r: RefLiA | dr: getRefsTarget(B, RefLiB) | o: RefLiC | ro: RefLiD | m: RefLiE | oa: RefLiF > .
 
-	---
-	rl [newActor] :  ActID || { Conf } => N + 1 || { newActor(N + 1, M) Conf } .
+	--- ########## HELPER EQS ##########
+	--- implementation of getRefsTargetEquiv
+	eq getRefsTargetEquiv(B, C :: D -> E) =
+		if E == B then
+			tt
+		else
+			ff
+		fi .
+	--- implementation of getRefsTarget
+	eq getRefsTarget(B, mtRefList) = mtRefList .
+	eq getRefsTarget(B, (RefA, RefLiA)) =
+		if (RefA) == mtRef then
+			mtRefList
+		else if getRefsTargetEquiv(B, RefA) == ff then
+			RefA, getRefsTarget(B, RefLiA)
+		else
+			getRefsTarget(B, RefLiA)
+		fi
+		fi .
+endfm
 
+mod G is protecting ACTOR . protecting LIST{Nat} . protecting COUNTER .
+	--- ########## SORTS ##########
+	sorts Configuration NatConfiguration .
+
+	--- ########## SUBSORTS ##########
+	subsort Actor < ActorList < QidList .
+
+	--- ########## OPS ##########
+	op _$_ : Actor Actor -> ActorList [ctor] .
+
+	--- Top Level G functions
+	--- TODO: How do we address getting more than one actor
+	op newActorList(_) : List{Nat} -> ActorList [ctor] .
+	--- Configuration is a set of actors together
+	--- TODO: Does this need to have 2 actorlists? or is it because
+	--- We can concatenate actorlists via QID-LIST do we still need to wory about this?
+	op { _ } : ActorList -> Configuration [ctor] .
+
+	--- NatConfiguration also gives us global variables for actor ID and reference ID
+	--- this allows us to have a unique name for every actor and reference
+	--- NextActorID NextReferenceID Configuration -> NatConfiguration
+	op ___ : Nat Nat Configuration -> NatConfiguration [ctor] .
+
+	--- Methods for NatConfiguration ########## 
+	op getNextActorId(_) : NatConfiguration -> Nat .
+	op getNextRefId(_) : NatConfiguration -> Nat .
+
+	--- ########## VARIABLES ##########
+	vars N : Nat .
+
+
+	--- ########## EQ ##########
+	--- implementations for NatConfiguration
+	--- eq getNextActorId(N M Conf) = N + 1 .
+	--- eq getNextRefId(N,M ^ Conf) = M + 1 .
+
+	--- ########## RULES ########## 
+	--- rl [newActor] :  ActID || { Conf } => N + 1 || { newActor(N + 1, M) Conf } .
+
+	--- parse App msg rule
+	--- pull a message from the soup, if the type is app, and the msg's target is an actor
+	--- then we need to spawn an actorlist.  to handle multiple actors we have spawnActorList in G
+	--- spawnActorList(Owner:Actor, Curr:Nat, Final:Nat, RefList)
+	--- this will spawn Final-Curr actors with RefList references and add them to the soup
+	--- spawnActorList(Owner, Curr, Final, RefList) =
+	--- if Curr != Final then
+	--- 	spawnActor(Owner,Curr,RefList) spawnActorList(Owner, Curr + 1, Final, RefList)
+	--- fi .
+	--- however we must also remember to edit Owner from the pool to add a New ReferenceList where all
+	--- entries are N :: Owner -> Ref (in RefList)
+	--- these will use the two natural number counters in a NatConfiguration
+
+	--- parse ReleaseRecv Msg
+
+	--- parse AckRelease Msg
+
+	--- createRef rule
+	--- This will call createRef for an actor which will edit its own "owners" list of things to send
+	--- this will not generate a message
+
+	--- release rule
+	--- this will not only call the release op but also the update info as long as the reference we want to release
+	--- exists in the actor we are trying to check
+
+	op inc : -> Nat .
+	rl [testcounter] : inc => counter .
 endm
-
---- test configuration 
---- red { A:ActorList B:ActorList } .
---- red { < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > } .
---- red 0 0 || { A:ActorList } .
-
---- test NatConfiguration
---- red 15,5 |^| { A:ActorList B:ActorList } .
-
---- test get next id
-red { A:ActorList B:ActorList }.
-red getNextActorId(15 5 { A:ActorList }) .
---- red getNextRefId(15,5 ^ { A:ActorList B:ActorList }) .
-
-
---- test reference list
---- red (0 :: 0 -> 0) (1 :: 1 -> 0) .
-
---- test Actor/ActorList
---- red < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > $ < i: 0 | sn: 0 | r: 0 :: 0 -> 0 | dr: 0 :: 0 -> 0 | o: 0 :: 0 -> 0 | ro: 0 :: 0 -> 0 | m: 0 :: 0 -> 0 | oa: 0 :: 0 -> 0 > .

@@ -1,0 +1,50 @@
+load ./actor.maude
+
+
+--- This is used to make sure that counter increments everytime we call it
+set clear rules off .
+
+******* TEST COUNTER *******
+--- rew counter . --- 0
+--- rew counter . --- 1
+--- rew counter . --- 2
+--- rew counter counter . --- 3 4
+
+******* TEST referenceList in ACTOR *******
+--- red (0 :: 1 -> 2 ) , (3 :: 4 -> 5) , (6 :: 7 -> 8) .
+
+******* TEST newActor in ACTOR *******
+--- red newActor(0, mtRef) .
+
+******* TEST Msg in ACTOR *******
+--- red @ A:MsgType :: B:ActorList :: C:ReferenceList :: D:MsgList @ .
+
+--- red @ A:MsgType :: B:Actor C:ActorList :: D:ReferenceList :: E:Msg F:MsgList @ .
+
+******* TEST spawn in ACTOR *******
+--- red spawn(0, mtRef) .
+
+******* TEST createRef in ACTOR *******
+--- red createRef(15, (0 :: 1 -> 2) , (3 :: 4 -> 5) ) .
+
+******* TEST receive in ACTOR *******
+--- red receive(newActor(0, mtRef), (5 :: 6 -> 7)) .
+
+******* TEST release in ACTOR *******
+--- remove from a reference list that is longer than 1
+--- red release(< i: 0 | sn: 0 | r: (3 :: 4 -> 5), (0 :: 1 -> 2) | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | oa: mtRef >, 0 :: 1 -> 2) .
+--- --- remove from a reference list that is length 1
+--- red release(< i: 0 | sn: 0 | r: (0 :: 1 -> 2) | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | oa: mtRef >, 0 :: 1 -> 2) .
+
+******* TEST getRefsTarget in ACTOR *******
+red getRefsTargetEquiv(0, (1 :: 2 -> 0)) .
+red getRefsTargetEquiv(0, (1 :: 2 -> 2)) .
+red getRefsTarget(0, ( (1 :: 2 -> 0), (3 :: 4 -> 5) ) ) .
+red getRefsTarget(0, ( (1 :: 2 -> 0) ) ) .
+red getRefsTarget(0, ( (3 :: 4 -> 5) ) ) .
+red getRefsTarget(0, mtRefList) .
+red getRefsTarget(0, mtRef) .
+
+******* TEST updateInfo in ACTOR *******
+red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 1) | o: mtRefList | ro: mtRefList | m: mtRefList | oa: mtRefList >, 1) .
+red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 0) | o: mtRefList | ro: mtRefList | m: mtRefList | oa: mtRefList >, 1) .
