@@ -34,14 +34,14 @@ fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 	op AckRelease : -> MsgType .
 
 	--- References
-	op _::_->_ : Nat Nat Nat -> Reference [ctor assoc id: mtRef] .
+	op _::_->_ : Nat Nat Nat -> Reference [ctor] .
 	--- op __ : Reference Reference -> ReferenceList [ctor] .
 	--- TODO: Should this check for uniqueness (set) for each reference?
 	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor assoc id: mtRefList] .
 	
 	--- i = id, sn = seqnum, r = refs, dr = deactivated_refs, o = owners, ro = released_owners, m = memory, tr = target_releasing, oa = onack
 	op < i: _ | sn: _ | r: _ | dr: _ | o: _ | ro: _ | m: _ | tr: _ | oa: _ > : Nat Nat ReferenceList ReferenceList ReferenceList 
-													ReferenceList ReferenceList ReferenceList ReferenceList ->  Actor [ctor assoc id: mtActorList] .
+													ReferenceList ReferenceList ReferenceList ReferenceList ->  Actor [ctor] .
 	--- TODO: Should this check for uniqueness (set) for i?
 	op _,_ : ActorList ActorList -> ActorList [ctor assoc id: mtActorList] .
 	--- Messages
@@ -53,7 +53,7 @@ fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 	--- - Spawn new actors; AND
 	--- - Create new Req_Release messages.
 	--- TODO: This means that we need newActor to handle cases where ActorList is MT
-	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor id: mtMsg] .
+	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor] .
 	op _,_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
 
 	--- Methods Declarations an Actor has
