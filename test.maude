@@ -77,19 +77,19 @@ set clear rules off .
 ******* TEST updateInfo in ACTOR *******
 --- testing releasing
 --- --- remove from DR
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 1), (3 :: 4 -> 5) | o: mtRefList | ro: mtRefList | m: mtRefList | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 0), (2 :: 3 -> 1) | o: mtRefList | ro: mtRefList | m: mtRefList | tr: mtRefList | owr: mtRefList |oa: mtRefList >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 1), (3 :: 4 -> 5) | o: mtRefList | ro: mtRefList | m: mtRefList | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 0), (2 :: 3 -> 1) | o: mtRefList | ro: mtRefList | m: mtRefList | tr: mtRefList | owr: mtRefList |oa: empty >, 1) .
 --- --- does not remove from DR
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 0), (2 :: 3 -> 5) | o: mtRefList | ro: mtRefList | m: mtRefList | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (2 :: 3 -> 0), (2 :: 3 -> 5) | o: mtRefList | ro: mtRefList | m: mtRefList | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
 --- --- add to target releasing
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
 --- --- does not add to target releasing
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
 --- --- add to owner_releasing
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 3) .
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 3) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: empty >, 3) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: empty >, 3) .
 --- --- does not add to owner_releasing
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
