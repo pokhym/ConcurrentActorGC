@@ -1,3 +1,8 @@
+***(
+	TODO: NEED TO REDEFINE == because GIVEN IN NAT
+	NEED TO REDEFINE IF THEN ELSE
+)
+
 set include BOOL off .
 
 fmod PRED is
