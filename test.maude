@@ -94,6 +94,7 @@ set clear rules off .
 --- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
 --- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
 --- --- add to onAck from everything
+--- --- TODO: NEEDS MORE TESTING
 --- --- dr: should contain only 2 :: 2 -> 2
 --- --- tr: should contain (3 :: 3 -> 1),(4 :: 4 -> 1)
 --- --- owr: should contain (5 :: 1 -> 3)
