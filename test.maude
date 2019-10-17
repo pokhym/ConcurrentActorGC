@@ -100,4 +100,4 @@ set clear rules off .
 --- --- owr: should contain (5 :: 1 -> 3)
 --- --- sn: should be 1
 --- --- oa: should contain (2 :: 2 -> 2),(3 :: 3 -> 1),(4 :: 4 -> 1),(5 :: 1 -> 3)
---- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (0 :: 0 -> 1),(1 :: 1 -> 1),(2 :: 2 -> 2) | o: mtRefList | ro: mtRefList | m: (3 :: 3 -> 1),(4 :: 4 -> 1),(5 :: 1 -> 3),(6 :: 6 -> 7) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (0 :: 0 -> 1),(1 :: 1 -> 1),(2 :: 2 -> 2) | o: mtRefList | ro: mtRefList | m: (3 :: 3 -> 1),(4 :: 4 -> 1),(5 :: 1 -> 3),(6 :: 6 -> 7) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .

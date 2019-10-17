@@ -219,7 +219,7 @@ fmod MSG is protecting NAT .
 endfm
 
 
-mod G is protecting ACTOR . protecting LIST{Nat} . protecting COUNTER .
+mod G is protecting ACTOR . protecting MSG . protecting LIST{Nat} . protecting COUNTER .
 	--- ########## SORTS ##########
 	sorts Configuration NatConfiguration .
 
