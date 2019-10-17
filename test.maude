@@ -87,9 +87,9 @@ set clear rules off .
 --- --- does not add to target releasing
 --- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
 --- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
---- add to owner_releasing
-red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 3) .
-red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 3) .
---- does not add to owner_releasing
-red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
-red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
+--- --- add to owner_releasing
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 3) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 1) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 3) .
+--- --- does not add to owner_releasing
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (2 :: 3 -> 2) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: mtRefList | o: mtRefList | ro: mtRefList | m: (3 :: 4 -> 5), (2 :: 3 -> 3) | tr: mtRefList | owr: mtRefList | oa: mtRefList >, 1) .

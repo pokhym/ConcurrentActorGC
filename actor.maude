@@ -1,20 +1,45 @@
 set include BOOL off .
 
+fmod PRED is
+	--- ########## SORTS ##########
+	sorts Pred .
+	--- ########## SUBSORTS ##########
+	--- ########## OPS ##########
+	op tt : -> Pred [ctor] .
+	op ff : -> Pred [ctor] .
+endfm
+
+fmod REFERENCE is protecting NAT .
+	--- ########## SORTS ##########
+	sorts Reference ReferenceList .
+	--- ########## SUBSORTS ##########
+	subsort Reference < ReferenceList .
+	--- ########## OPS ##########
+	op mtRef : -> Reference [ctor] .
+	op mtRefList : -> ReferenceList [ctor] .
+	--- References
+	op _::_->_ : Nat Nat Nat -> Reference [ctor] .
+	--- op __ : Reference Reference -> ReferenceList [ctor] .
+	--- TODO: Should this check for uniqueness (set) for each reference?
+	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor assoc id: mtRefList] .
+endfm
+
+view TrivAsReferenceList from TRIV to REFERENCE is
+	sort Elt to ReferenceList .
+endv
+
 fmod ACTOR is protecting NAT .
 	protecting QID-LIST .
-	--- protecting MAP{Nat, ReferenceList} .
+	protecting REFERENCE .
+	protecting PRED .
+	protecting MAP{Nat, TrivAsReferenceList} .
 	--- ########## SORTS ##########
 	--- sorts List QidList .
-	sorts Reference ReferenceList .
-	sorts Msg MsgList MsgType .
 	sorts Actor ActorList .
-	sorts Pred .
 	
 	--- ########## SUBSORTS ##########
 	--- We want to be able to have a list of references
 	--- subsort Reference Msg Actor < Qid < ReferenceList MsgList ActorList < QidList . 
-	subsort Reference < ReferenceList .
-	subsort Msg < MsgList .
 	subsort Actor < ActorList .
 
 	--- ########## OPS ##########
@@ -22,26 +47,8 @@ fmod ACTOR is protecting NAT .
 	--- op Null : -> Nat [ctor] .
 	op mtActor : -> Actor [ctor] .
 	op mtActorList : -> ActorList [ctor] .
-	op mtRef : -> Reference [ctor] .
-	op mtRefList : -> ReferenceList [ctor] .
-	op mtMsg : -> Msg [ctor] .
-	op mtMsgList : -> MsgList [ctor] .
 	--- op mtConf : -> Configuration .
-	op tt : -> Pred [ctor] .
-	op ff : -> Pred [ctor] .
 
-	--- Bool
-	--- Message Types
-	op App : -> MsgType .
-	op ReleaseReq : -> MsgType .
-	op AckRelease : -> MsgType .
-
-	--- References
-	op _::_->_ : Nat Nat Nat -> Reference [ctor] .
-	--- op __ : Reference Reference -> ReferenceList [ctor] .
-	--- TODO: Should this check for uniqueness (set) for each reference?
-	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor assoc id: mtRefList] .
-	
 	--- i = id, sn = seqnum, r = refs, dr = deactivated_refs, o = owners, ro = released_owners, 
 	--- m = memory, tr = target_releasing, owr = owner_releasing, oa = onack
 	op < i: _ | sn: _ | r: _ | dr: _ | o: _ | ro: _ | m: _ | tr: _ | owr: _ | oa: _ > : 
@@ -49,17 +56,6 @@ fmod ACTOR is protecting NAT .
 			ReferenceList ReferenceList ReferenceList ->  Actor [ctor] .
 	--- TODO: Should this check for uniqueness (set) for i?
 	op _,_ : ActorList ActorList -> ActorList [ctor assoc id: mtActorList] .
-	--- Messages
-	--- The three types are App, Req_Release, and Ack_Release. 
-	--- I guess there should be another kind of message for asking an actor to take a snapshot?
-	--- An App message can do any combination of the following things all at once
-	--- - Add all references in the message to the target actor’s state; AND
-	--- - Create new App messages, each of which may contain a set of new references; AND
-	--- - Spawn new actors; AND
-	--- - Create new Req_Release messages.
-	--- TODO: This means that we need newActor to handle cases where ActorList is MT
-	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor] .
-	op _,_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
 
 	--- Methods Declarations an Actor has
 	--- Actor Constructor: ActorID1 to be created, ActorID2 of first reference, next unique refID
@@ -109,9 +105,6 @@ fmod ACTOR is protecting NAT .
 	vars A B C D E F G : Nat .
 	vars AcA : Actor .
 	vars AcLiA : ActorList .
-	vars MsgA : Msg .
-	vars MsgTA : MsgType .
-	vars MsgLiA : MsgList .
 	vars RefA RefB : Reference .
 	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH : ReferenceList . 
 
@@ -191,9 +184,37 @@ fmod ACTOR is protecting NAT .
 		fi .
 endfm
 
---- view TrivAsReferenceList from TRIV to REFERENCELIST is
---- 	sort Elt to ReferenceList .
---- endv
+fmod MSG is protecting NAT .
+	protecting ACTOR .
+	--- ########## SORTS ##########
+	sorts Msg MsgList MsgType .
+	--- ########## SUBSORTS ##########
+	subsort Msg < MsgList .
+	--- ########## OPS ##########
+	op mtMsg : -> Msg [ctor] .
+	op mtMsgList : -> MsgList [ctor] .
+	--- Message Types
+	op App : -> MsgType .
+	op ReleaseReq : -> MsgType .
+	op AckRelease : -> MsgType .
+	--- Messages
+	--- The three types are App, Req_Release, and Ack_Release. 
+	--- I guess there should be another kind of message for asking an actor to take a snapshot?
+	--- An App message can do any combination of the following things all at once
+	--- - Add all references in the message to the target actor’s state; AND
+	--- - Create new App messages, each of which may contain a set of new references; AND
+	--- - Spawn new actors; AND
+	--- - Create new Req_Release messages.
+	--- TODO: This means that we need newActor to handle cases where ActorList is MT
+	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor] .
+	op _,_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
+
+	--- ########## VARS ##########
+	vars MsgA : Msg .
+	vars MsgTA : MsgType .
+	vars MsgLiA : MsgList .
+endfm
+
 
 mod G is protecting ACTOR . protecting LIST{Nat} . protecting COUNTER .
 	--- ########## SORTS ##########
