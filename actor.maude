@@ -1,5 +1,8 @@
-fmod ACTOR is protecting NAT . protecting LIST{Nat} .
+set include BOOL off .
+
+fmod ACTOR is protecting NAT .
 	protecting QID-LIST .
+	--- protecting MAP{Nat, ReferenceList} .
 	--- ########## SORTS ##########
 	--- sorts List QidList .
 	sorts Reference ReferenceList .
@@ -39,9 +42,11 @@ fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 	--- TODO: Should this check for uniqueness (set) for each reference?
 	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor assoc id: mtRefList] .
 	
-	--- i = id, sn = seqnum, r = refs, dr = deactivated_refs, o = owners, ro = released_owners, m = memory, tr = target_releasing, oa = onack
-	op < i: _ | sn: _ | r: _ | dr: _ | o: _ | ro: _ | m: _ | tr: _ | oa: _ > : Nat Nat ReferenceList ReferenceList ReferenceList 
-													ReferenceList ReferenceList ReferenceList ReferenceList ->  Actor [ctor] .
+	--- i = id, sn = seqnum, r = refs, dr = deactivated_refs, o = owners, ro = released_owners, 
+	--- m = memory, tr = target_releasing, owr = owner_releasing, oa = onack
+	op < i: _ | sn: _ | r: _ | dr: _ | o: _ | ro: _ | m: _ | tr: _ | owr: _ | oa: _ > : 
+		Nat Nat ReferenceList ReferenceList ReferenceList ReferenceList ReferenceList 
+			ReferenceList ReferenceList ReferenceList ->  Actor [ctor] .
 	--- TODO: Should this check for uniqueness (set) for i?
 	op _,_ : ActorList ActorList -> ActorList [ctor assoc id: mtActorList] .
 	--- Messages
@@ -81,7 +86,7 @@ fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 	op ackRelease(_) : Nat -> Actor .
 
 	--- ########## HELPER OPS ##########
-	--- realeasingEquiv(B, x : A -> B) = ff, realeasingEquiv(B, x : A -> C) = tt
+	--- realeasingEquiv(B, x : A -> B) = tt, realeasingEquiv(B, x : A -> C) = ff
 	op realeasingEquiv(_,_) : Nat Reference -> Pred .
 	--- releasingRefList(B, (x : A -> B), (y : C -> B), (z : D -> E)) returns x, y
 	--- b: B, deactivatedRefs
@@ -95,7 +100,10 @@ fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 	op _inRefList_ : Reference ReferenceList -> Pred .
 	--- A URefList B : Set Union with 2 reference lists
 	op _URefList_ : ReferenceList ReferenceList -> ReferenceList .
-
+	--- sentRefList
+	op sentRefList(_,_,_) : Nat ReferenceList ReferenceList -> ReferenceList .
+	--- sentEquiv(B, x : A -> B) = ff, sentEquiv(B, x : B -> C) = tt
+	op sentEquiv(_,_) : Nat Reference -> Pred .
 
 	--- ########## VARS ##########
 	vars A B C D E F G : Nat .
@@ -105,25 +113,25 @@ fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 	vars MsgTA : MsgType .
 	vars MsgLiA : MsgList .
 	vars RefA RefB : Reference .
-	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG : ReferenceList . 
+	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH : ReferenceList . 
 
 	--- ########## EQS ##########
 	--- implementations for Actor
-	eq newActor(A, RefLiA) = < i: A | sn: 0 | r: RefLiA | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | tr: mtRef | oa: mtRef > .
+	eq newActor(A, RefLiA) = < i: A | sn: 0 | r: RefLiA | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | tr: mtRef | owr: mtRef | oa: mtRef > .
 	--- implementations for Spawn
 	eq spawn(A, RefLiA) = newActor(A, RefLiA) .
 	--- implementations for createRef
 	eq createRef(A , B :: C -> D , E :: F -> G) = A :: G -> D .
 	--- implementation of receive
-	eq receive(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | oa: RefLiG >, RefA) =
-		< i: A | sn: B | r: RefA , RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | oa: RefLiG > .
+	eq receive(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: RefLiH >, RefA) =
+		< i: A | sn: B | r: RefA , RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: RefLiH > .
 	--- implementation of release
-	eq release(< i: A | sn: B | r: RefA, RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | oa: RefLiG >, RefA) = 
-		< i: A | sn: B | r: RefLiA | dr: RefA, RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | oa: RefLiG > .
+	eq release(< i: A | sn: B | r: RefA, RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: RefLiH >, RefA) = 
+		< i: A | sn: B | r: RefLiA | dr: RefA, RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: RefLiH > .
 	--- implementation of update info
-	eq updateInfo(< i: A | sn: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | oa: RefLiG >, B) =
+	eq updateInfo(< i: A | sn: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: RefLiH >, B) =
 		< i: A | sn: C + 1 | r: RefLiA | dr: releasingRefList(B, RefLiB) | o: RefLiC | ro: RefLiD | 
-			m: RefLiE | tr: createdRefList(B, RefLiE, RefLiF), RefLiF | oa: RefLiG > .
+			m: RefLiE | tr: createdRefList(B, RefLiE, RefLiF), RefLiF | owr: sentRefList(B, RefLiE, RefLiG), RefLiG | oa: RefLiH > .
 
 	--- ########## HELPER EQS ##########
 	--- implementation of realeasingEquiv
@@ -163,7 +171,29 @@ fmod ACTOR is protecting NAT . protecting LIST{Nat} .
 		else
 			RefA inRefList RefLiA
 		fi .
+	--- implementation of sentRefList
+	eq sentRefList(B, mtRefList, RefLiB) = mtRefList .
+	eq sentRefList(B, (RefA, RefLiA), RefLiB) = 
+		if (RefA) == mtRef then
+			mtRefList
+		else if (RefA inRefList RefLiB == ff) and (sentEquiv(B, RefA) == tt) then
+			RefA, sentRefList(B, RefLiA, RefLiB)
+		else
+			sentRefList(B, RefLiA, RefLiB)
+		fi
+		fi .
+	--- implementation of sentEquiv
+	eq sentEquiv(B, C :: D -> E) =
+		if B == D then
+			tt
+		else
+			ff
+		fi .
 endfm
+
+--- view TrivAsReferenceList from TRIV to REFERENCELIST is
+--- 	sort Elt to ReferenceList .
+--- endv
 
 mod G is protecting ACTOR . protecting LIST{Nat} . protecting COUNTER .
 	--- ########## SORTS ##########
