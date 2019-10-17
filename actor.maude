@@ -94,10 +94,12 @@ fmod ACTOR is protecting NAT .
 	op _inRefList_ : Reference ReferenceList -> Pred .
 	--- A URefList B : Set Union with 2 reference lists
 	op _URefList_ : ReferenceList ReferenceList -> ReferenceList .
-	--- sentRefList
+	--- sentRefList(B, (x : A -> B), (y : E -> C), (z : B -> D), (y : C -> B)) returns z : B -> D
 	op sentRefList(_,_,_) : Nat ReferenceList ReferenceList -> ReferenceList .
 	--- sentEquiv(B, x : A -> B) = ff, sentEquiv(B, x : B -> C) = tt
 	op sentEquiv(_,_) : Nat Reference -> Pred .
+	--- genOnAckMap()
+	op genOnAckMap(_,_,_) : ReferenceList ReferenceList ReferenceList -> Map{Nat, TrivAsReferenceList} .
 
 	--- ########## VARS ##########
 	vars A B C D E F G : Nat .
@@ -115,15 +117,16 @@ fmod ACTOR is protecting NAT .
 	--- implementations for createRef
 	eq createRef(A , B :: C -> D , E :: F -> G) = A :: G -> D .
 	--- implementation of receive
-	eq receive(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: empty >, RefA) =
-		< i: A | sn: B | r: RefA , RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: empty > .
+	eq receive(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, RefA) =
+		< i: A | sn: B | r: RefA , RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > .
 	--- implementation of release
-	eq release(< i: A | sn: B | r: RefA, RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: empty >, RefA) = 
-		< i: A | sn: B | r: RefLiA | dr: RefA, RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: empty > .
+	eq release(< i: A | sn: B | r: RefA, RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, RefA) = 
+		< i: A | sn: B | r: RefLiA | dr: RefA, RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > .
 	--- implementation of update info
-	eq updateInfo(< i: A | sn: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: empty >, B) =
+	eq updateInfo(< i: A | sn: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, B) =
 		< i: A | sn: C + 1 | r: RefLiA | dr: releasingRefList(B, RefLiB) | o: RefLiC | ro: RefLiD | 
-			m: RefLiE | tr: createdRefList(B, RefLiE, RefLiF), RefLiF | owr: sentRefList(B, RefLiE, RefLiG), RefLiG | oa: empty > .
+			m: RefLiE | tr: createdRefList(B, RefLiE, RefLiF), RefLiF | owr: sentRefList(B, RefLiE, RefLiG), RefLiG | 
+			oa: insert(C + 1, (releasingRefList(B, RefLiB),createdRefList(B, RefLiE, RefLiF),sentRefList(B, RefLiE, RefLiG)),empty), MapNatRefLiA > .
 
 	--- ########## HELPER EQS ##########
 	--- implementation of realeasingEquiv
@@ -181,6 +184,7 @@ fmod ACTOR is protecting NAT .
 		else
 			ff
 		fi .
+	--- implementation of genOnAckMap
 endfm
 
 fmod MSG is protecting NAT .
