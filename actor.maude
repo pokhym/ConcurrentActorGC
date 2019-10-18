@@ -1,6 +1,9 @@
 ***(
 	TODO: NEED TO REDEFINE == because GIVEN IN NAT
 	NEED TO REDEFINE IF THEN ELSE
+	NE-LIST vs LIST (CHECK MAUDE BOOK), NE should be ctor, list is no ctor
+	we can still use identity in the specification
+	iNAT redefine
 )
 
 set include BOOL off .
