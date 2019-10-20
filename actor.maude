@@ -5,6 +5,8 @@
 	still need to do _,_ uniqueness?
 
 	remove onack map? would it be easier to prove?
+
+	URGENT: Need to fix op overloading between ref,actor,msg lists
 )
 
 set include BOOL off .
