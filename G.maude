@@ -1,32 +1,69 @@
-mod G is protecting MSG .
+load msg.maude
+
+***(
+    The following module is only to be used to make things easier to read
+)
+fmod NUMNAT is
+	protecting INAT .
+    protecting NAT .
+
+	--- converts a iNat number into a Nat number
+	op From(_) : iNat -> Nat .
+	op FromHelper(_,_,_) : iNat iNat Nat -> Nat .
+	--- converts a Nat to an iNat
+	op To(_) : Nat -> iNat .
+	op ToHelper(_,_,_) : Nat Nat iNat -> iNat .
+	
+	vars iNA iNB : iNat .
+	vars NA NB : Nat .
+	eq From((0).iNat) = (0).Nat .
+	eq From(iNA) = FromHelper(iNA, (0).iNat, (0).Nat) .
+	eq FromHelper(iNA, iNB, NA) =
+		if iNA ~iN iNB == tt then
+			NA
+		else
+			FromHelper(iNA, s iNB, NA + 1)
+		fi .
+	eq To(NA) = ToHelper(NA, (0).Nat, (0).iNat) .
+	eq ToHelper(NA, NB, iNA) =
+		if NA == NB then
+			iNA
+		else
+			ToHelper(NA, NB + 1, s iNA)
+		fi .
+endfm
+
+mod G is
+	protecting MSG .
+	protecting NUMNAT .
 	--- ########## SORTS ##########
-	sorts Configuration NatConfiguration .
+	--- sorts Configuration NatConfiguration .
 
 	--- ########## SUBSORTS ##########
-	subsort Actor < ActorList < QidList .
+	--- subsort Actor < ActorList < QidList .
 
 	--- ########## OPS ##########
-	op _$_ : Actor Actor -> ActorList [ctor] .
+	--- op _$_ : Actor Actor -> ActorList [ctor] .
 
 	--- Top Level G functions
 	--- TODO: How do we address getting more than one actor
-	op newActorList(_) : List{Nat} -> ActorList [ctor] .
+	--- op newActorList(_) : List{Nat} -> ActorList [ctor] .
 	--- Configuration is a set of actors together
 	--- TODO: Does this need to have 2 actorlists? or is it because
 	--- We can concatenate actorlists via QID-LIST do we still need to wory about this?
-	op { _ } : ActorList -> Configuration [ctor] .
+	--- op { _ } : ActorList -> Configuration [ctor] .
 
 	--- NatConfiguration also gives us global variables for actor ID and reference ID
 	--- this allows us to have a unique name for every actor and reference
 	--- NextActorID NextReferenceID Configuration -> NatConfiguration
-	op ___ : Nat Nat Configuration -> NatConfiguration [ctor] .
+	--- op ___ : Nat Nat Configuration -> NatConfiguration [ctor] .
 
 	--- Methods for NatConfiguration ########## 
-	op getNextActorId(_) : NatConfiguration -> Nat .
-	op getNextRefId(_) : NatConfiguration -> Nat .
+	--- op getNextActorId(_) : NatConfiguration -> Nat .
+	--- op getNextRefId(_) : NatConfiguration -> Nat .
 
 	--- ########## VARIABLES ##########
-	vars N : Nat .
+	--- vars N : Nat .
 
 
 	--- ########## EQ ##########
@@ -62,6 +99,6 @@ mod G is protecting MSG .
 	--- this will not only call the release op but also the update info as long as the reference we want to release
 	--- exists in the actor we are trying to check
 
-	op inc : -> Nat .
-	rl [testcounter] : inc => counter .
+	--- op inc : -> Nat .
+	--- rl [testcounter] : inc => counter .
 endm

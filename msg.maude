@@ -1,3 +1,5 @@
+load actor.maude
+
 fmod MSG is protecting ACTOR .
 	--- ########## SORTS ##########
 	sorts Msg MsgList MsgType .
