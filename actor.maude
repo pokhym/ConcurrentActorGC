@@ -1,53 +1,35 @@
 ***(
-	TODO: NEED TO REDEFINE == because GIVEN IN NAT
-	NEED TO REDEFINE IF THEN ELSE
+	TODO:
 	NE-LIST vs LIST (CHECK MAUDE BOOK), NE should be ctor, list is no ctor
-	we can still use identity in the specification
-	iNAT redefine
+
+	still need to do _,_ uniqueness?
+
+	remove onack map? would it be easier to prove?
 )
 
 set include BOOL off .
 
-fmod PRED is
-	--- ########## SORTS ##########
-	sorts Pred .
-	--- ########## SUBSORTS ##########
-	--- ########## OPS ##########
-	op tt : -> Pred [ctor] .
-	op ff : -> Pred [ctor] .
-endfm
-
-fmod REFERENCE is protecting NAT .
-	--- ########## SORTS ##########
-	sorts Reference ReferenceList .
-	--- ########## SUBSORTS ##########
-	subsort Reference < ReferenceList .
-	--- ########## OPS ##########
-	op mtRef : -> Reference [ctor] .
-	op mtRefList : -> ReferenceList [ctor] .
-	--- References
-	op _::_->_ : Nat Nat Nat -> Reference [ctor] .
-	--- op __ : Reference Reference -> ReferenceList [ctor] .
-	--- TODO: Should this check for uniqueness (set) for each reference?
-	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor assoc id: mtRefList] .
-endfm
+--- load util.maude
+load reference.maude
 
 view TrivAsReferenceList from TRIV to REFERENCE is
 	sort Elt to ReferenceList .
 endv
 
-fmod ACTOR is protecting NAT .
-	protecting QID-LIST .
-	protecting REFERENCE .
+view TrivAsiNat from TRIV to INAT is
+	sort Elt to iNat .
+endv
+
+fmod ACTOR is 
 	protecting PRED .
-	protecting MAP{Nat, TrivAsReferenceList} .
+	protecting INAT .
+	protecting REFERENCE .
+	protecting MAP{TrivAsiNat, TrivAsReferenceList} .
+	
 	--- ########## SORTS ##########
-	--- sorts List QidList .
 	sorts Actor ActorList .
 	
 	--- ########## SUBSORTS ##########
-	--- We want to be able to have a list of references
-	--- subsort Reference Msg Actor < Qid < ReferenceList MsgList ActorList < QidList . 
 	subsort Actor < ActorList .
 
 	--- ########## OPS ##########
@@ -58,20 +40,20 @@ fmod ACTOR is protecting NAT .
 	--- i = id, sn = seqnum, r = refs, dr = deactivated_refs, o = owners, ro = released_owners, 
 	--- m = memory, tr = target_releasing, owr = owner_releasing, oa = onack
 	op < i: _ | sn: _ | r: _ | dr: _ | o: _ | ro: _ | m: _ | tr: _ | owr: _ | oa: _ > : 
-		Nat Nat ReferenceList ReferenceList ReferenceList ReferenceList ReferenceList 
-			ReferenceList ReferenceList Map{Nat, TrivAsReferenceList} ->  Actor [ctor] .
+		iNat iNat ReferenceList ReferenceList ReferenceList ReferenceList ReferenceList 
+			ReferenceList ReferenceList Map{TrivAsiNat, TrivAsReferenceList} ->  Actor [ctor] .
 	--- TODO: Should this check for uniqueness (set) for i?
 	op _,_ : ActorList ActorList -> ActorList [ctor assoc id: mtActorList] .
 
 	--- Methods Declarations an Actor has
 	--- Actor Constructor: ActorID1 to be created, ActorID2 of first reference, next unique refID
 	--- NOTE: refID :: ActorID1 -> ActorID2
-	op newActor(_,_) : Nat ReferenceList -> Actor [ctor] .
+	op newActor(_,_) : iNat ReferenceList -> Actor [ctor] .
 	--- Spawn: Allows an actor A to spawn a child, this is just a renaming of newActor
 	--- to spawn multiple actors refer to the rules in G
-	op spawn(_,_) : Nat ReferenceList -> ActorList .
+	op spawn(_,_) : iNat ReferenceList -> ActorList .
 	--- createRef: Creates a reference C -> B if given A -> B and A -> C
-	op createRef(_,_,_) : Nat Reference Reference -> Reference .
+	op createRef(_,_,_) : iNat Reference Reference -> Reference .
 	--- receive: Allows an actor A to recieve a new reference
 	op receive(_,_) : Actor Reference -> Actor .
 	--- release: Allows an actor to release an input reference, this only edits deactivated_refs
@@ -80,42 +62,35 @@ fmod ACTOR is protecting NAT .
 	op release(_,_) : Actor Reference -> Actor .
 	--- updateInfo: Called by actor A release an actor B to update local variables
 	--- the actual release message will be created and sent via the rule into the soup
-	op updateInfo(_,_) : Actor Nat -> Actor .
+	op updateInfo(_,_) : Actor iNat -> Actor .
 	--- releaseRecv: Called by an actor B which received a recieve request from A
 	--- this will release references in B and send an ack to A
-	op releaseRecv(_,_,_,_) : Nat Nat ReferenceList ReferenceList -> Actor .
-	--- ackRelease: This is sent by actor B to A as an ack
-	op ackRelease(_) : Nat -> Actor .
+	op releaseRecv(_,_,_,_) : iNat iNat ReferenceList ReferenceList -> Actor .
+--- 	--- ackRelease: This is sent by actor B to A as an ack
+	op ackRelease(_) : iNat -> Actor .
 
 	--- ########## HELPER OPS ##########
-	--- realeasingEquiv(B, x : A -> B) = tt, realeasingEquiv(B, x : A -> C) = ff
-	op realeasingEquiv(_,_) : Nat Reference -> Pred .
+	--- releasingEquiv(B, x : A -> B) = tt, releasingEquiv(B, x : A -> C) = ff
+	op releasingEquiv(_,_) : iNat Reference -> Pred .
 	--- releasingRefList(B, (x : A -> B), (y : C -> B), (z : D -> E)) returns x, y
 	--- b: B, deactivatedRefs
-	op releasingRefList(_,_) : Nat ReferenceList -> ReferenceList .
-	--- removeRefsFromRefList
-	op removeRefsFromRefList(_,_) : ReferenceList ReferenceList -> ReferenceList .
+	--- op releasingRefList(_,_) : iNat ReferenceList -> ReferenceList .
+	op releasingRefList(_,_) : iNat ReferenceList -> ReferenceList .
 	--- createdRefList(B, (x : A -> B), (y : C -> B), (z : D -> B), (y : C -> B)) returns z : D -> B
 	--- b : B, Memory, TargetReleasing
-	op createdRefList(_,_,_) : Nat ReferenceList ReferenceList -> ReferenceList .
-	--- A inRefList B:  checks the membership of A in B
-	op _inRefList_ : Reference ReferenceList -> Pred .
-	--- A URefList B : Set Union with 2 reference lists
-	op _URefList_ : ReferenceList ReferenceList -> ReferenceList .
+	op createdRefList(_,_,_) : iNat ReferenceList ReferenceList -> ReferenceList .
 	--- sentRefList(B, (x : A -> B), (y : E -> C), (z : B -> D), (y : C -> B)) returns z : B -> D
-	op sentRefList(_,_,_) : Nat ReferenceList ReferenceList -> ReferenceList .
-	--- sentEquiv(B, x : A -> B) = ff, sentEquiv(B, x : B -> C) = tt
-	op sentEquiv(_,_) : Nat Reference -> Pred .
+	op sentRefList(_,_,_) : iNat ReferenceList ReferenceList -> ReferenceList .
 	--- genOnAckMap()
-	op genOnAckMap(_,_,_) : ReferenceList ReferenceList ReferenceList -> Map{Nat, TrivAsReferenceList} .
+	op genOnAckMap(_,_,_) : ReferenceList ReferenceList ReferenceList -> Map{TrivAsiNat, TrivAsReferenceList} .
 
 	--- ########## VARS ##########
-	vars A B C D E F G : Nat .
+	vars A B C D E F G : iNat .
 	vars AcA : Actor .
 	vars AcLiA : ActorList .
 	vars RefA RefB : Reference .
 	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH : ReferenceList . 
-	vars MapNatRefLiA : Map{Nat, TrivAsReferenceList} .
+	vars MapNatRefLiA : Map{TrivAsiNat, TrivAsReferenceList} .
 
 	--- ########## EQS ##########
 	--- implementations for Actor
@@ -132,165 +107,42 @@ fmod ACTOR is protecting NAT .
 		< i: A | sn: B | r: RefLiA | dr: RefA, RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > .
 	--- implementation of update info
 	eq updateInfo(< i: A | sn: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, B) =
-		< i: A | sn: C + 1 | r: RefLiA | dr: releasingRefList(B, RefLiB) | o: RefLiC | ro: RefLiD | 
-			m: RefLiE | tr: createdRefList(B, RefLiE, RefLiF), RefLiF | owr: sentRefList(B, RefLiE, RefLiG), RefLiG | 
-			oa: insert(C + 1, (releasingRefList(B, RefLiB),createdRefList(B, RefLiE, RefLiF),sentRefList(B, RefLiE, RefLiG)),empty), MapNatRefLiA > .
+		< i: A | sn: s C | r: RefLiA | dr: remList(releasingRefList(B, RefLiB), RefLiB) 
+		| o: RefLiC | ro: RefLiD | m: RefLiE | tr: createdRefList(B, RefLiE, RefLiF), RefLiF | owr: sentRefList(B, RefLiE, RefLiG),RefLiG 
+		| oa: insert(s C, ((releasingRefList(B, RefLiB) U sentRefList(B, RefLiE, RefLiG)) U createdRefList(B, RefLiE, RefLiF)),MapNatRefLiA) > .
 
 	--- ########## HELPER EQS ##########
-	--- implementation of realeasingEquiv
-	eq realeasingEquiv(B, C :: D -> E) =
-		if E == B then
-			tt
-		else
-			ff
-		fi .
+	--- implementation of releasingEquiv
+	eq releasingEquiv(B, C :: D -> E) = B ~iN E .
+	
 	--- implementation of releasingRefList
-	eq releasingRefList(B, mtRefList) = mtRefList .
-	eq releasingRefList(B, (RefA, RefLiA)) =
-		if (RefA) == mtRef then
-			mtRefList
-		else if realeasingEquiv(B, RefA) == ff then
-			RefA, releasingRefList(B, RefLiA)
-		else
-			releasingRefList(B, RefLiA)
-		fi
-		fi .
+	eq releasingRefList(B, mtRefList) = mtRefList . --- termination
+	eq releasingRefList(B, ((A :: C -> B), RefLiA)) = (A :: C -> B), releasingRefList(B, RefLiA). --- ref matches in dr
+	eq releasingRefList(B, ((A :: C -> D), RefLiA)) = releasingRefList(B, RefLiA) . --- ref does not match in dr
+	
 	--- implmentation of createdRefList
-	eq createdRefList(B, mtRefList, RefLiB) = mtRefList .
-	eq createdRefList(B, (RefA, RefLiA), RefLiB) =
-		if (RefA) == mtRef then
-			mtRefList
-		else if (RefA inRefList RefLiB == ff) and (realeasingEquiv(B, RefA) == tt) then
-			RefA, createdRefList(B, RefLiA, RefLiB)
-		else
-			createdRefList(B, RefLiA, RefLiB)
-		fi
-		fi .
-	--- implmentation of inRefList
-	eq RefA inRefList mtRefList = ff .
-	eq RefA inRefList (RefB, RefLiA) = 
-		if RefA == RefB then
-			tt
-		else
-			RefA inRefList RefLiA
-		fi .
+	eq createdRefList(B, mtRefList, RefLiB) = mtRefList . --- termination
+	--- ref in mem and tr 
+	eq createdRefList(B, ((A :: C -> B), RefLiA), (RefLiB, (A :: C -> B), RefLiC)) = createdRefList(B, RefLiA, (RefLiB, RefLiC)) .
+	--- ref in mem and not in tr
+	--- this is the case where tr is empty
+	eq createdRefList(B, ((A :: C -> B), RefLiA), mtRefList) = (A :: C -> B), createdRefList(B, RefLiA, mtRefList) .
+	--- NOTE: Due to unique reference IDs, A :: C -> B and A :: D -> B cannot occur
+	--- this is the case where tr is not empty
+	eq createdRefList(B, ((A :: C -> B), RefLiA), (RefLiB, (D :: E -> F), RefLiC)) = (A :: C -> B), createdRefList(B, RefLiA, (RefLiB, (D :: E -> F), RefLiC)) .
+	--- ref is not in mem
+	eq createdRefList(B, ((A :: C -> D), RefLiA), RefLiB) = createdRefList(B, RefLiA, RefLiB) .
+
 	--- implementation of sentRefList
-	eq sentRefList(B, mtRefList, RefLiB) = mtRefList .
-	eq sentRefList(B, (RefA, RefLiA), RefLiB) = 
-		if (RefA) == mtRef then
-			mtRefList
-		else if (RefA inRefList RefLiB == ff) and (sentEquiv(B, RefA) == tt) then
-			RefA, sentRefList(B, RefLiA, RefLiB)
-		else
-			sentRefList(B, RefLiA, RefLiB)
-		fi
-		fi .
-	--- implementation of sentEquiv
-	eq sentEquiv(B, C :: D -> E) =
-		if B == D then
-			tt
-		else
-			ff
-		fi .
-	--- implementation of genOnAckMap
+	eq sentRefList(B, mtRefList, RefLiB) = mtRefList . --- termination
+	--- ref in mem and owr
+	eq sentRefList(B, ((A :: B -> C), RefLiA), (RefLiB, (A :: B -> C), RefLiC)) = sentRefList(B, RefLiA, (RefLiB, RefLiC)) .
+	--- ref in mem and not in owr
+	--- this is the case where owr is empty
+	eq sentRefList(B, ((A :: B -> C), RefLiA), mtRefList) = (A :: B -> C), sentRefList(B, RefLiA, mtRefList) .
+	--- NOTE: Due to unique reference IDs, A :: C -> B and A :: D -> B cannot occur
+	--- this is the case where tr is not empty
+	eq sentRefList(B, ((A :: B -> C), RefLiA), (RefLiB, (D :: E -> F), RefLiC)) = (A :: B -> C), sentRefList(B, RefLiA, (RefLiB, (D :: E -> F), RefLiC)) .
+	--- ref is not in mem
+	eq sentRefList(B, ((A :: C -> D), RefLiA), RefLiB) = sentRefList(B, RefLiA, RefLiB) .
 endfm
-
-fmod MSG is protecting NAT .
-	protecting ACTOR .
-	--- ########## SORTS ##########
-	sorts Msg MsgList MsgType .
-	--- ########## SUBSORTS ##########
-	subsort Msg < MsgList .
-	--- ########## OPS ##########
-	op mtMsg : -> Msg [ctor] .
-	op mtMsgList : -> MsgList [ctor] .
-	--- Message Types
-	op App : -> MsgType .
-	op ReleaseReq : -> MsgType .
-	op AckRelease : -> MsgType .
-	--- Messages
-	--- The three types are App, Req_Release, and Ack_Release. 
-	--- I guess there should be another kind of message for asking an actor to take a snapshot?
-	--- An App message can do any combination of the following things all at once
-	--- - Add all references in the message to the target actor’s state; AND
-	--- - Create new App messages, each of which may contain a set of new references; AND
-	--- - Spawn new actors; AND
-	--- - Create new Req_Release messages.
-	--- TODO: This means that we need newActor to handle cases where ActorList is MT
-	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor] .
-	op _,_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
-
-	--- ########## VARS ##########
-	vars MsgA : Msg .
-	vars MsgTA : MsgType .
-	vars MsgLiA : MsgList .
-endfm
-
-
-mod G is protecting ACTOR . protecting MSG . protecting LIST{Nat} . protecting COUNTER .
-	--- ########## SORTS ##########
-	sorts Configuration NatConfiguration .
-
-	--- ########## SUBSORTS ##########
-	subsort Actor < ActorList < QidList .
-
-	--- ########## OPS ##########
-	op _$_ : Actor Actor -> ActorList [ctor] .
-
-	--- Top Level G functions
-	--- TODO: How do we address getting more than one actor
-	op newActorList(_) : List{Nat} -> ActorList [ctor] .
-	--- Configuration is a set of actors together
-	--- TODO: Does this need to have 2 actorlists? or is it because
-	--- We can concatenate actorlists via QID-LIST do we still need to wory about this?
-	op { _ } : ActorList -> Configuration [ctor] .
-
-	--- NatConfiguration also gives us global variables for actor ID and reference ID
-	--- this allows us to have a unique name for every actor and reference
-	--- NextActorID NextReferenceID Configuration -> NatConfiguration
-	op ___ : Nat Nat Configuration -> NatConfiguration [ctor] .
-
-	--- Methods for NatConfiguration ########## 
-	op getNextActorId(_) : NatConfiguration -> Nat .
-	op getNextRefId(_) : NatConfiguration -> Nat .
-
-	--- ########## VARIABLES ##########
-	vars N : Nat .
-
-
-	--- ########## EQ ##########
-	--- implementations for NatConfiguration
-	--- eq getNextActorId(N M Conf) = N + 1 .
-	--- eq getNextRefId(N,M ^ Conf) = M + 1 .
-
-	--- ########## RULES ########## 
-	--- rl [newActor] :  ActID || { Conf } => N + 1 || { newActor(N + 1, M) Conf } .
-
-	--- parse App msg rule
-	--- pull a message from the soup, if the type is app, and the msg's target is an actor
-	--- then we need to spawn an actorlist.  to handle multiple actors we have spawnActorList in G
-	--- spawnActorList(Owner:Actor, Curr:Nat, Final:Nat, RefList)
-	--- this will spawn Final-Curr actors with RefList references and add them to the soup
-	--- spawnActorList(Owner, Curr, Final, RefList) =
-	--- if Curr != Final then
-	--- 	spawnActor(Owner,Curr,RefList) spawnActorList(Owner, Curr + 1, Final, RefList)
-	--- fi .
-	--- however we must also remember to edit Owner from the pool to add a New ReferenceList where all
-	--- entries are N :: Owner -> Ref (in RefList)
-	--- these will use the two natural number counters in a NatConfiguration
-
-	--- parse ReleaseRecv Msg
-
-	--- parse AckRelease Msg
-
-	--- createRef rule
-	--- This will call createRef for an actor which will edit its own "owners" list of things to send
-	--- this will not generate a message
-
-	--- release rule
-	--- this will not only call the release op but also the update info as long as the reference we want to release
-	--- exists in the actor we are trying to check
-
-	op inc : -> Nat .
-	rl [testcounter] : inc => counter .
-endm

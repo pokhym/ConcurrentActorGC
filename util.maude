@@ -1,0 +1,28 @@
+fmod PRED is
+	--- ########## SORTS ##########
+	sorts Pred .
+	--- ########## SUBSORTS ##########
+	--- ########## OPS ##########
+	op _and_ : Pred Pred -> Pred .
+	op tt : -> Pred [ctor] .
+	op ff : -> Pred [ctor] .
+	--- ########## VARS ##########
+	vars P1 P2 : Pred .
+    --- ########## EQS ##########
+	eq P1 and ff = ff .
+    eq P1 and tt = P1 .
+endfm
+
+fmod INAT is
+    pr PRED  .
+    sort iNat .
+    op 0 : -> iNat [ctor metadata "1"] .
+    op s_ : iNat -> iNat [ctor metadata "2"] .
+    vars N N’ : iNat .
+    --- equality enrichment
+    op _~iN_ : iNat iNat -> Pred [comm metadata "3"] .
+    eq N ~iN N = tt .
+    eq s N ~iN s N’ = N ~iN N’ .
+    eq 0 ~iN s N = ff .
+    eq N ~iN s N = ff .
+endfm

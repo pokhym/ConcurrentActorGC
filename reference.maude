@@ -1,0 +1,51 @@
+load util.maude
+
+fmod REFERENCE is protecting INAT .
+	--- ########## SORTS ##########
+	sorts Reference ReferenceList .
+	--- ########## SUBSORTS ##########
+	subsort Reference < ReferenceList .
+	--- ########## OPS ##########
+	op mtRef : -> Reference [ctor] .
+	op mtRefList : -> ReferenceList [ctor] .
+	--- References
+	op _::_->_ : iNat iNat iNat -> Reference [ctor] .
+	--- op __ : Reference Reference -> ReferenceList [ctor] .
+	--- TODO: Should this check for uniqueness (set) for each reference?
+	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor comm assoc id: mtRefList] .
+	--- This removes the references in the first reference list from the second reference list
+	op remList(_,_) : ReferenceList ReferenceList -> ReferenceList .
+	--- Performs set union on reference lists based upon their membership
+	op _U_ : ReferenceList ReferenceList -> ReferenceList .
+
+	--- ########## VARS ##########
+	vars RefA RefB : Reference .
+	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH : ReferenceList . 
+
+	--- ########## EQS ##########
+	eq remList(mtRefList, RefLiA) = RefLiA . --- termination
+	eq remList((RefA, RefLiA), (RefLiB, RefA, RefLiC)) = remList(RefLiA, (RefLiB, RefLiC)) . --- remove case
+	eq remList((RefA, RefLiA), (RefLiB, RefB, RefLiC)) = RefB, remList(RefLiA, (RefLiB, RefLiC)) . --- doesn't exist recreate
+
+	eq mtRefList U mtRefList = mtRefList .
+	eq RefLiA U mtRefList = RefLiA .
+	eq mtRefList U RefLiA = RefLiA .
+	eq (RefA, RefLiA) U (RefA, RefLiB) = RefA, (RefLiA U RefLiB) .
+	eq (RefA, RefLiA) U (RefB, RefLiB) = RefA, RefB, (RefLiA U RefLiB) .
+endfm
+
+--- return mt list
+--- red remList(mtRefList, mtRefList) .
+--- red remList(mtRefList, 0 :: s 0 -> s s 0) .
+--- return non-empty list
+--- red remList((0 :: s 0 -> s s 0), ((0 :: s 0 -> s s 0), (s s s 0 :: s s s s 0 -> s s s s s 0), (s s s s s s 0 :: s s s s s s s 0 -> s s s s s s s s 0))) .
+--- red remList(((s s s s s s 0 :: s s s s s s s 0 -> s s s s s s s s 0), (0 :: s 0 -> s s 0)), ((0 :: s 0 -> s s 0), (s s s 0 :: s s s s 0 -> s s s s s 0), (s s s s s s 0 :: s s s s s s s 0 -> s s s s s s s s 0))) .
+
+--- --- union 2 mts should still be mt
+--- red mtRefList U mtRefList .
+--- --- union of mt and non empty should be non-empty
+--- red mtRefList U 0 :: s 0 -> s s 0 .
+--- red 0 :: s 0 -> s s 0  U mtRefList .
+--- --- below case covers duplicates 
+--- red ((0 :: 0 -> 0),(s 0 :: 0 -> 0)) U ((s s 0 :: 0 -> 0),(s s s 0 :: 0 -> 0)) .
+--- red ((0 :: 0 -> 0),mtRefList,(s 0 :: 0 -> 0)) U ((s 0 :: 0 -> 0),(s s s 0 :: 0 -> 0)) .

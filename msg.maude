@@ -1,0 +1,29 @@
+fmod MSG is protecting ACTOR .
+	--- ########## SORTS ##########
+	sorts Msg MsgList MsgType .
+	--- ########## SUBSORTS ##########
+	subsort Msg < MsgList .
+	--- ########## OPS ##########
+	op mtMsg : -> Msg [ctor] .
+	op mtMsgList : -> MsgList [ctor] .
+	--- Message Types
+	op App : -> MsgType .
+	op ReleaseReq : -> MsgType .
+	op AckRelease : -> MsgType .
+	--- Messages
+	--- The three types are App, Req_Release, and Ack_Release. 
+	--- I guess there should be another kind of message for asking an actor to take a snapshot?
+	--- An App message can do any combination of the following things all at once
+	--- - Add all references in the message to the target actor’s state; AND
+	--- - Create new App messages, each of which may contain a set of new references; AND
+	--- - Spawn new actors; AND
+	--- - Create new Req_Release messages.
+	--- TODO: This means that we need newActor to handle cases where ActorList is MT
+	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor] .
+	op _,_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
+
+	--- ########## VARS ##########
+	vars MsgA : Msg .
+	vars MsgTA : MsgType .
+	vars MsgLiA : MsgList .
+endfm

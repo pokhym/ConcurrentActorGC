@@ -13,66 +13,10 @@ set clear rules off .
 ******* TEST referenceList in ACTOR *******
 --- red (0 :: 1 -> 2 ) , (3 :: 4 -> 5) , (6 :: 7 -> 8) .
 
-******* TEST newActor in ACTOR *******
---- red newActor(0, mtRef) .
-
 ******* TEST Msg in ACTOR *******
 --- red @ A:MsgType :: B:ActorList :: C:ReferenceList :: D:MsgList @ .
 
 --- red @ A:MsgType :: B:Actor C:ActorList :: D:ReferenceList :: E:Msg F:MsgList @ .
-
-******* TEST spawn in ACTOR *******
---- red spawn(0, mtRef) .
-
-******* TEST createRef in ACTOR *******
---- red createRef(15, (0 :: 1 -> 2) , (3 :: 4 -> 5) ) .
-
-******* TEST receive in ACTOR *******
---- red receive(newActor(0, mtRef), (5 :: 6 -> 7)) .
-
-******* TEST release in ACTOR *******
---- remove from a reference list that is longer than 1
---- red release(< i: 0 | sn: 0 | r: (3 :: 4 -> 5), (0 :: 1 -> 2) | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | oa: mtRef >, 0 :: 1 -> 2) .
---- --- remove from a reference list that is length 1
---- red release(< i: 0 | sn: 0 | r: (0 :: 1 -> 2) | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | oa: mtRef >, 0 :: 1 -> 2) .
-
-******* TEST getRefsTarget in ACTOR *******
---- red realeasingEquiv(0, (1 :: 2 -> 0)) .
---- red realeasingEquiv(0, (1 :: 2 -> 2)) .
---- red releasingRefList(0, ( (1 :: 2 -> 0), (3 :: 4 -> 5) ) ) .
---- red releasingRefList(0, ( (3 :: 4 -> 5), (1 :: 2 -> 0) ) ) .
---- red releasingRefList(0, ( (1 :: 2 -> 0) ) ) .
---- red releasingRefList(0, ( (3 :: 4 -> 5) ) ) .
---- red releasingRefList(0, mtRefList) .
---- red releasingRefList(0, mtRef) .
-
-******* TEST inRefList in ACTOR *******
---- red 0 :: 0 -> 0 inRefList mtRefList .
---- red 0 :: 0 -> 0 inRefList (1 :: 1 -> 1), (0 :: 0 -> 0), (2 :: 2 -> 2) .
---- red 0 :: 0 -> 0 inRefList (1 :: 1 -> 1), (3 :: 0 -> 0), (2 :: 2 -> 2) .
---- red mtRef inRefList (1 :: 1 -> 1), (3 :: 0 -> 0), (2 :: 2 -> 2) .
---- red mtRef inRefList mtRefList .
-
-******* TEST createdRefList in ACTOR *******
---- red createdRefList(0, mtRefList, mtRefList) .
---- red createdRefList(0, mtRefList, 0 :: 0 -> 0) .
---- red createdRefList(0, 0 :: 0 -> 0, mtRefList) .
---- red createdRefList(0, 0 :: 0 -> 0, 0 :: 0 -> 0) .
---- red createdRefList(0, 0 :: 0 -> 0, 0 :: 0 -> 1) .
---- red createdRefList(0, ((1 :: 1 -> 1), (0 :: 0 -> 0), (2 :: 2 -> 0), (3 :: 3 -> 3)), ((4 :: 4 -> 4), (5 :: 5 -> 5))) .
---- red createdRefList(0, ((1 :: 1 -> 1), (0 :: 0 -> 0), (2 :: 2 -> 0), (3 :: 3 -> 3)), ((4 :: 4 -> 4), (2 :: 2 -> 0))) .
---- red createdRefList(0, ((0 :: 0 -> 0), (2 :: 2 -> 0), (3 :: 3 -> 3)), ((4 :: 4 -> 4), (2 :: 2 -> 0))) .
-
-******* TEST sentRefList in ACTOR *******
---- red sentRefList(0, mtRefList, mtRefList) .
---- red sentRefList(0, mtRefList, 0 :: 0 -> 0) .
---- red sentRefList(0, 0 :: 0 -> 0, mtRefList) .
---- red sentRefList(0, 0 :: 0 -> 0, 0 :: 0 -> 0) .
---- red sentRefList(0, 0 :: 0 -> 0, 0 :: 0 -> 1) .
---- red sentRefList(0, ((1 :: 1 -> 1), (0 :: 0 -> 0), (2 :: 2 -> 0), (3 :: 3 -> 3)), ((4 :: 4 -> 4), (5 :: 5 -> 5))) .
---- red sentRefList(0, ((1 :: 1 -> 1), (0 :: 1 -> 0), (2 :: 2 -> 0), (3 :: 3 -> 3)), ((4 :: 4 -> 4), (2 :: 0 -> 2))) .
---- red sentRefList(0, ((1 :: 1 -> 1), (0 :: 0 -> 0), (2 :: 2 -> 0), (3 :: 3 -> 3)), ((4 :: 4 -> 4), (2 :: 0 -> 2))) .
---- red sentRefList(0, ((0 :: 0 -> 0), (2 :: 2 -> 0), (3 :: 3 -> 3)), ((4 :: 4 -> 4), (2 :: 2 -> 0))) .
 
 ******* TEST updateInfo in ACTOR *******
 --- testing releasing
@@ -100,4 +44,108 @@ set clear rules off .
 --- --- owr: should contain (5 :: 1 -> 3)
 --- --- sn: should be 1
 --- --- oa: should contain (2 :: 2 -> 2),(3 :: 3 -> 1),(4 :: 4 -> 1),(5 :: 1 -> 3)
-red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (0 :: 0 -> 1),(1 :: 1 -> 1),(2 :: 2 -> 2) | o: mtRefList | ro: mtRefList | m: (3 :: 3 -> 1),(4 :: 4 -> 1),(5 :: 1 -> 3),(6 :: 6 -> 7) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+--- --- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (0 :: 0 -> 1),(1 :: 1 -> 1),(2 :: 2 -> 2) | o: mtRefList | ro: mtRefList | m: (3 :: 3 -> 1),(4 :: 4 -> 1),(5 :: 1 -> 3),(6 :: 6 -> 7) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+
+***(
+	ALL THE THINGS ABOVE ARE DEFUNCT UNTIL FURTHER NOTICE
+	THIS IS BECAUSE WE NEED TO NOT USE NAT BUT RATHER INAT
+)
+
+******* TEST newActor in ACTOR *******
+--- red in ACTOR : newActor(0, mtRef) .
+
+******* TEST spawn in ACTOR *******
+--- red in ACTOR : spawn(s 0, mtRef) .
+
+******* TEST createRef in ACTOR *******
+--- red createRef(s s s s s s 0, (0 :: s 0 -> s s 0) , (s s s 0 :: s s s s 0 -> s s s s s 0) ) .
+
+******* TEST receive in ACTOR *******
+--- red receive(newActor(0, mtRef), (s s s s s 0 :: s s s s s s 0 -> s s s s s s s 0)) .
+
+******* TEST release in ACTOR *******
+--- remove from a reference list that is longer than 1
+--- red release(< i: 0 | sn: 0 | r: (s s s 0 :: s s s s 0 -> s s s s s 0), (0 :: s 0 -> s s 0) | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | tr: mtRef | owr: mtRef | oa: empty >, 0 :: s 0 -> s s 0) .
+--- --- remove from a reference list that is length 1
+--- red release(< i: 0 | sn: 0 | r: (0 :: s 0 -> s s 0) | dr: mtRef | o: mtRef | ro: mtRef | m: mtRef | tr: mtRef | owr: mtRef | oa: empty >, 0 :: s 0 -> s s 0) .
+
+******* TEST realeasingEquiv in ACTOR *******
+--- --- should return ff
+--- --- releasingEquiv(0, (1 :: 2 -> 3))
+--- red in ACTOR : releasingEquiv(0, (s 0 :: s s 0 -> s s s 0)) .
+
+--- --- should return tt
+--- --- releasingEquiv(0, (1 :: 2 -> 0))
+--- red in ACTOR : releasingEquiv(0, (s 0 :: s s 0 -> 0)) .
+
+******* TEST releasingRefList in ACTOR *******
+--- --- should return mtRefList
+--- --- red in ACTOR : releasingRefList(0, mtRefList) .
+--- --- releasingRefList(0, (1 :: 2 -> 3), (4 :: 5 -> 6))
+--- red in ACTOR : releasingRefList(0, ((s 0 :: s s 0 -> s s s 0), (s s s s 0 :: s s s s s 0 -> s s s s s s 0))) .
+
+--- --- should return a non-empty list
+--- --- releasingRefList(0, (1 :: 2 -> 3), (4 :: 5 -> 0), (6 :: 7 -> 8)) = 4 :: 5 -> 0
+--- red in ACTOR : releasingRefList(0, ((s 0 :: s s 0 -> s s s 0), (s s s s 0 :: s s s s s 0 -> 0), (s s s s s s 0 :: s s s s s s s 0 -> s s s s s s s s 0))) .
+--- --- releasingRefList(0, (1 :: 2 -> 3), (4 :: 5 -> 0), (6 :: 7 -> 8), (9 :: 10 -> 0)) = 4 :: 5 -> 0, (9 :: 10 -> 0)
+--- red in ACTOR : releasingRefList(0, ((s 0 :: s s 0 -> s s s 0), (s s s s 0 :: s s s s s 0 -> 0), (s s s s s s 0 :: s s s s s s s 0 -> s s s s s s s s 0), (s s s s s s s s s 0 :: s s s s s s s s s s 0 -> 0))) .
+
+******* TEST createdRefList in ACTOR *******
+--- --- should return mtRefList
+--- red in ACTOR : createdRefList(0, mtRefList, mtRefList) .
+--- red in ACTOR : createdRefList(0, mtRefList, 0 :: 0 -> 0) .
+--- red in ACTOR : createdRefList(0, (s 0 :: s s 0 -> s s s 0), mtRefList) .
+--- red in ACTOR : createdRefList(0, (s 0 :: s s 0 -> 0), (s 0 :: s s 0 -> 0)) .
+--- red in ACTOR : createdRefList(0, (s 0 :: s s 0 -> s s s 0), (s 0 :: s s 0 -> s s s 0)) .
+
+--- --- should return nonempty reflist
+--- --- createRefList(0, 1 :: 2 -> 0, mtRefList) = 1 :: 2 -> 0 
+--- red in ACTOR : createdRefList(0, (s 0 :: s s 0 -> 0), mtRefList) .
+--- --- createdRefList(0, (1 :: 2 -> 3, 4 :: 5 -> 0), (1 :: 2 -> 3)) = 4 :: 5 -> 0
+--- red in ACTOR : createdRefList(0, ((s 0 :: s s 0 -> s s s 0), (s s s s 0 :: s s s s s 0 -> 0)), (s 0 :: s s 0 -> s s s 0)) .
+--- --- createdRefList(0, (1 :: 2 -> 3, 4 :: 5 -> 0), (1 :: 2 -> 0)) = 4 :: 5 -> 0
+--- red in ACTOR : createdRefList(0, ((s 0 :: s s 0 -> s s s 0), (s s s s 0 :: s s s s s 0 -> 0)), (s 0 :: s s 0 -> 0)) .
+--- --- createdRefList(0, (1 :: 2 -> 0, 4 :: 5 -> 0, 6 :: 7 -> 0), (1 :: 2 -> 0)) = 4 :: 5 -> 0, 6 :: 7 -> 0
+--- red in ACTOR : createdRefList(0, ((s 0 :: s s 0 -> 0), (s s s s 0 :: s s s s s 0 -> 0), (s s s s s s 0 :: s s s s s s s 0 -> 0)), (s 0 :: s s 0 -> 0)) .
+
+******* TEST sentRefList in ACTOR *******
+--- --- should return mtRefList
+--- red in ACTOR : sentRefList(0, mtRefList, mtRefList) .
+--- red in ACTOR : sentRefList(0, mtRefList, 0 :: 0 -> 0) .
+--- red in ACTOR : sentRefList(0, (s 0 :: s s 0 -> s s s 0), mtRefList) .
+--- red in ACTOR : sentRefList(0, (s 0 :: 0 -> 0), (s 0 :: 0 -> 0)) .
+--- red in ACTOR : sentRefList(0, (s 0 :: s s 0 -> s s s 0), (s 0 :: s s 0 -> s s s 0)) .
+
+--- --- should return nonempty reflist
+--- --- sentRefList(0, 1 :: 0 -> 2, mtRefList) = 1 :: 0 -> 2
+--- red in ACTOR : sentRefList(0, s 0 :: 0 -> s s 0, mtRefList) .
+--- --- sentRefList(0, (1 :: 2 -> 3, 4 :: 0 -> 5), (1 :: 2 -> 3)) = 4 :: 0 -> 5
+--- red in ACTOR : sentRefList(0, ((s 0 :: s s 0 -> s s s 0), (s s s s 0 :: 0 -> s s s s s 0)), (s 0 :: s s 0 -> s s s 0)) .
+--- --- sentRefList(0, (1 :: 2 -> 3, 4 :: 0 -> 5), (1 :: 0 -> 2)) = 4 :: 0 -> 5
+--- red in ACTOR : sentRefList(0, ((s 0 :: s s 0 -> s s s 0), (s s s s 0 :: 0 -> s s s s s 0)), (s 0 :: 0 -> s s 0)) .
+--- --- sentRefList(0, (1 :: 0 -> 2, 4 :: 0 -> 5, 6 :: 0 -> 7), (1 :: 0 -> 2)) = 4 :: 0 -> 5, 6 :: 0 -> 7
+--- red in ACTOR : sentRefList(0, ((s 0 :: 0 -> s s 0), (s s s s 0 :: 0 -> s s s s s 0), (s s s s s s 0 :: 0 -> s s s s s s s 0)), (s 0 :: 0 -> s s 0)) .
+
+******* TEST updateInfo in ACTOR *******
+--- --- add to onAck from everything
+--- --- TODO: NEEDS MORE TESTING
+--- --- dr: should contain only 2 :: 2 -> 2
+--- --- tr: should contain (3 :: 3 -> 1),(4 :: 4 -> 1)
+--- --- owr: should contain (5 :: 1 -> 3)
+--- --- sn: should be 1
+--- --- releasing: (0 :: 0 -> 1), (1 :: 1 -> 1)
+--- --- created: (3 :: 3 -> 1), (4 :: 4 -> 1)
+--- --- sent: (5 :: 1 -> 3)
+--- --- oa: (0 :: 0 -> 1), (1 :: 1 -> 1) U (3 :: 3 -> 1), (4 :: 4 -> 1) U (5 :: 1 -> 3)
+--- --- updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (0 :: 0 -> 1),(1 :: 1 -> 1),(2 :: 2 -> 2) | o: mtRefList | ro: mtRefList | m: (3 :: 3 -> 1),(4 :: 4 -> 1),(5 :: 1 -> 3),(6 :: 6 -> 7) | tr: mtRefList | owr: mtRefList | oa: empty >, 1) .
+--- --- < i: 0 
+--- --- | sn: s 0 
+--- --- | r: mtRefList 
+--- --- | dr: s s 0 :: s s 0 -> s s 0 
+--- --- | o: mtRefList | ro: mtRefList 
+--- --- | m: (s s s 0 :: s s s 0 -> s 0),(s s s s 0 :: s s s s 0 -> s 0),(s s s s s 0 :: s 0 -> s s s 0),s s s s s s 0 :: s s s s s s 0 -> s s s s s s s 0 
+--- --- | tr: (s s s 0 :: s s s 0 -> s 0),s s s s 0 :: s s s s 0 -> s 0 
+--- --- | owr: s s s s s 0 :: s 0 -> s s s 0 
+--- --- | oa: s 0 |-> (0 :: 0 -> s 0),(s 0 :: s 0 -> s 0),(s s s 0 :: s s s 0 -> s 0),(s s s s 0 :: s s s s 0 -> s 0),s s s s s 0 :: s 0 -> s s s 0
+--- --- >
+--- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (0 :: 0 -> s 0),(s 0 :: s 0 -> s 0),(s s 0 :: s s 0 -> s s 0) | o: mtRefList | ro: mtRefList | m: (s s s 0 :: s s s 0 -> s 0),(s s s s 0 :: s s s s 0 -> s 0),(s s s s s 0 :: s 0 -> s s s 0),(s s s s s s 0 :: s s s s s s 0 -> s s s s s s s 0) | tr: mtRefList | owr: mtRefList | oa: empty >, s 0) .

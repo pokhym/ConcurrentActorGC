@@ -1,0 +1,67 @@
+mod G is protecting MSG .
+	--- ########## SORTS ##########
+	sorts Configuration NatConfiguration .
+
+	--- ########## SUBSORTS ##########
+	subsort Actor < ActorList < QidList .
+
+	--- ########## OPS ##########
+	op _$_ : Actor Actor -> ActorList [ctor] .
+
+	--- Top Level G functions
+	--- TODO: How do we address getting more than one actor
+	op newActorList(_) : List{Nat} -> ActorList [ctor] .
+	--- Configuration is a set of actors together
+	--- TODO: Does this need to have 2 actorlists? or is it because
+	--- We can concatenate actorlists via QID-LIST do we still need to wory about this?
+	op { _ } : ActorList -> Configuration [ctor] .
+
+	--- NatConfiguration also gives us global variables for actor ID and reference ID
+	--- this allows us to have a unique name for every actor and reference
+	--- NextActorID NextReferenceID Configuration -> NatConfiguration
+	op ___ : Nat Nat Configuration -> NatConfiguration [ctor] .
+
+	--- Methods for NatConfiguration ########## 
+	op getNextActorId(_) : NatConfiguration -> Nat .
+	op getNextRefId(_) : NatConfiguration -> Nat .
+
+	--- ########## VARIABLES ##########
+	vars N : Nat .
+
+
+	--- ########## EQ ##########
+	--- implementations for NatConfiguration
+	--- eq getNextActorId(N M Conf) = N + 1 .
+	--- eq getNextRefId(N,M ^ Conf) = M + 1 .
+
+	--- ########## RULES ########## 
+	--- rl [newActor] :  ActID || { Conf } => N + 1 || { newActor(N + 1, M) Conf } .
+
+	--- parse App msg rule
+	--- pull a message from the soup, if the type is app, and the msg's target is an actor
+	--- then we need to spawn an actorlist.  to handle multiple actors we have spawnActorList in G
+	--- spawnActorList(Owner:Actor, Curr:Nat, Final:Nat, RefList)
+	--- this will spawn Final-Curr actors with RefList references and add them to the soup
+	--- spawnActorList(Owner, Curr, Final, RefList) =
+	--- if Curr != Final then
+	--- 	spawnActor(Owner,Curr,RefList) spawnActorList(Owner, Curr + 1, Final, RefList)
+	--- fi .
+	--- however we must also remember to edit Owner from the pool to add a New ReferenceList where all
+	--- entries are N :: Owner -> Ref (in RefList)
+	--- these will use the two natural number counters in a NatConfiguration
+
+	--- parse ReleaseRecv Msg
+
+	--- parse AckRelease Msg
+
+	--- createRef rule
+	--- This will call createRef for an actor which will edit its own "owners" list of things to send
+	--- this will not generate a message
+
+	--- release rule
+	--- this will not only call the release op but also the update info as long as the reference we want to release
+	--- exists in the actor we are trying to check
+
+	op inc : -> Nat .
+	rl [testcounter] : inc => counter .
+endm
