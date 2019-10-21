@@ -2,9 +2,9 @@ load actor.maude
 
 fmod MSG is protecting ACTOR .
 	--- ########## SORTS ##########
-	sorts Msg MsgList MsgType .
+	sorts Msg NeMsgList MsgList MsgType .
 	--- ########## SUBSORTS ##########
-	subsort Msg < MsgList .
+	subsort Msg < NeMsgList < MsgList .
 	--- ########## OPS ##########
 	op mtMsg : -> Msg [ctor] .
 	op mtMsgList : -> MsgList [ctor] .
@@ -22,7 +22,10 @@ fmod MSG is protecting ACTOR .
 	--- - Create new Req_Release messages.
 	--- TODO: This means that we need newActor to handle cases where ActorList is MT
 	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor] .
-	op _,_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
+	
+	op _$_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
+	op _$_ : NeMsgList MsgList -> MsgList [ctor ditto] .
+	op _$_ : MsgList NeMsgList -> MsgList [ctor ditto] .
 
 	--- ########## VARS ##########
 	vars MsgA : Msg .

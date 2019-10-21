@@ -26,3 +26,36 @@ fmod INAT is
     eq 0 ~iN s N = ff .
     eq N ~iN s N = ff .
 endfm
+
+***(
+    The following module is only to be used to make things easier to read
+)
+fmod NUMNAT is
+	protecting INAT .
+    protecting NAT .
+
+	--- converts a iNat number into a Nat number
+	op From(_) : iNat -> Nat .
+	op FromHelper(_,_,_) : iNat iNat Nat -> Nat .
+	--- converts a Nat to an iNat
+	op To(_) : Nat -> iNat .
+	op ToHelper(_,_,_) : Nat Nat iNat -> iNat .
+	
+	vars iNA iNB : iNat .
+	vars NA NB : Nat .
+	eq From((0).iNat) = (0).Nat .
+	eq From(iNA) = FromHelper(iNA, (0).iNat, (0).Nat) .
+	eq FromHelper(iNA, iNB, NA) =
+		if iNA ~iN iNB == tt then
+			NA
+		else
+			FromHelper(iNA, s iNB, NA + 1)
+		fi .
+	eq To(NA) = ToHelper(NA, (0).Nat, (0).iNat) .
+	eq ToHelper(NA, NB, iNA) =
+		if NA == NB then
+			iNA
+		else
+			ToHelper(NA, NB + 1, s iNA)
+		fi .
+endfm

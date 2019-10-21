@@ -2,27 +2,39 @@ load util.maude
 
 fmod REFERENCE is protecting INAT .
 	--- ########## SORTS ##########
-	sorts Reference ReferenceList .
+	sorts Reference NeReferenceList ReferenceList .
 	--- ########## SUBSORTS ##########
-	subsort Reference < ReferenceList .
+	subsorts Reference < NeReferenceList < ReferenceList .
 	--- ########## OPS ##########
 	op mtRef : -> Reference [ctor] .
 	op mtRefList : -> ReferenceList [ctor] .
 	--- References
+	--- x : A -> B, where x is a reference ID and A,B are actor IDs
 	op _::_->_ : iNat iNat iNat -> Reference [ctor] .
 	--- op __ : Reference Reference -> ReferenceList [ctor] .
 	--- TODO: Should this check for uniqueness (set) for each reference?
 	op _,_ : ReferenceList ReferenceList -> ReferenceList [ctor comm assoc id: mtRefList] .
+	op _,_ : NeReferenceList ReferenceList -> NeReferenceList [ctor ditto] .
+	op _,_ : ReferenceList NeReferenceList -> NeReferenceList [ctor ditto] .
 	--- This removes the references in the first reference list from the second reference list
 	op remList(_,_) : ReferenceList ReferenceList -> ReferenceList .
 	--- Performs set union on reference lists based upon their membership
 	op _U_ : ReferenceList ReferenceList -> ReferenceList .
 
 	--- ########## VARS ##########
+	vars x A B C D : iNat .
 	vars RefA RefB : Reference .
 	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH : ReferenceList . 
 
 	--- ########## EQS ##########
+	--- Uniqueness equation
+	--- NOTE: THIS CHECKS A REFERENCE AS A WHOLE AND NOT JUST THE REFERENCE NUMBER
+	--- eq (RefLiA, RefA, RefLiB), (RefLiC, RefA, RefLiD) = RefLiA, RefA, RefLiB, RefLiC, RefLiD .
+	--- NOTE: THIS CHECKS A REFERENCE NUMBER SPECIFICALLY
+	eq mtRef, mtRef = mtRef .
+	eq mtRef, RefLiA = RefLiA .
+	eq (RefLiA, (x :: A -> B), RefLiB), (RefLiC, (x :: C -> D), RefLiD) = RefLiA, (x :: A -> B), RefLiB, RefLiC, RefLiD .
+	
 	eq remList(mtRefList, RefLiA) = RefLiA . --- termination
 	eq remList((RefA, RefLiA), (RefLiB, RefA, RefLiC)) = remList(RefLiA, (RefLiB, RefLiC)) . --- remove case
 	eq remList((RefA, RefLiA), (RefLiB, RefB, RefLiC)) = RefB, remList(RefLiA, (RefLiB, RefLiC)) . --- doesn't exist recreate
@@ -33,6 +45,22 @@ fmod REFERENCE is protecting INAT .
 	eq (RefA, RefLiA) U (RefA, RefLiB) = RefA, (RefLiA U RefLiB) .
 	eq (RefA, RefLiA) U (RefB, RefLiB) = RefA, RefB, (RefLiA U RefLiB) .
 endfm
+
+--- red mtRef .
+--- red mtRef, mtRef .
+--- red mtRefList .
+--- red mtRefList, mtRefList .
+--- red mtRef, mtRefList .
+--- red mtRefList, mtRef .
+--- red mtRef, (0 :: 0 -> 0) .
+--- red (0 :: 0 -> 0), mtRef .
+--- red mtRefList, (0 :: 0 -> 0) .
+--- red (0 :: 0 -> 0), mtRefList .
+--- red 0 :: 0 -> 0 .
+--- red (0 :: 0 -> 0), (0 :: 0 -> 0) .
+--- red (0 :: 0 -> 0), (s 0 :: 0 -> 0), (s 0 :: 0 -> 0), (0 :: 0 -> 0)  .
+--- red (0 :: 0 -> s 0), (s 0 :: 0 -> 0), (s s 0 :: 0 -> 0), (0 :: 0 -> 0), (s s s 0 :: 0 -> 0), (s 0 :: 0 -> 0), (0 :: 0 -> 0), (s s s s 0 :: 0 -> 0), (0 :: 0 -> 0) .
+
 
 --- return mt list
 --- red remList(mtRefList, mtRefList) .
