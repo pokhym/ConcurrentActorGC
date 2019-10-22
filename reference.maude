@@ -6,7 +6,7 @@ fmod REFERENCE is protecting INAT .
 	--- ########## SUBSORTS ##########
 	subsorts Reference < NeReferenceList < ReferenceList .
 	--- ########## OPS ##########
-	op mtRef : -> Reference [ctor] .
+	--- op mtRef : -> Reference [ctor] .
 	op mtRefList : -> ReferenceList [ctor] .
 	--- References
 	--- x : A -> B, where x is a reference ID and A,B are actor IDs
@@ -31,8 +31,8 @@ fmod REFERENCE is protecting INAT .
 	--- NOTE: THIS CHECKS A REFERENCE AS A WHOLE AND NOT JUST THE REFERENCE NUMBER
 	--- eq (RefLiA, RefA, RefLiB), (RefLiC, RefA, RefLiD) = RefLiA, RefA, RefLiB, RefLiC, RefLiD .
 	--- NOTE: THIS CHECKS A REFERENCE NUMBER SPECIFICALLY
-	eq mtRef, mtRef = mtRef .
-	eq mtRef, RefLiA = RefLiA .
+	--- eq mtRef, mtRef = mtRef .
+	--- eq mtRef, RefLiA = RefLiA .
 	eq (RefLiA, (x :: A -> B), RefLiB), (RefLiC, (x :: C -> D), RefLiD) = RefLiA, (x :: A -> B), RefLiB, RefLiC, RefLiD .
 	
 	eq remList(mtRefList, RefLiA) = RefLiA . --- termination
@@ -46,14 +46,6 @@ fmod REFERENCE is protecting INAT .
 	eq (RefA, RefLiA) U (RefB, RefLiB) = RefA, RefB, (RefLiA U RefLiB) .
 endfm
 
---- red mtRef .
---- red mtRef, mtRef .
---- red mtRefList .
---- red mtRefList, mtRefList .
---- red mtRef, mtRefList .
---- red mtRefList, mtRef .
---- red mtRef, (0 :: 0 -> 0) .
---- red (0 :: 0 -> 0), mtRef .
 --- red mtRefList, (0 :: 0 -> 0) .
 --- red (0 :: 0 -> 0), mtRefList .
 --- red 0 :: 0 -> 0 .
