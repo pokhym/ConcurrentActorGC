@@ -6,7 +6,7 @@ fmod MSG is protecting ACTOR .
 	--- ########## SUBSORTS ##########
 	subsort Msg < NeMsgList < MsgList .
 	--- ########## OPS ##########
-	op mtMsg : -> Msg [ctor] .
+	--- op mtMsg : -> Msg [ctor] .
 	op mtMsgList : -> MsgList [ctor] .
 	--- Message Types
 	op App : -> MsgType .
@@ -21,7 +21,9 @@ fmod MSG is protecting ACTOR .
 	--- - Spawn new actors; AND
 	--- - Create new Req_Release messages.
 	--- TODO: This means that we need newActor to handle cases where ActorList is MT
-	op @_::_::_::_@ : MsgType ActorList ReferenceList MsgList -> Msg [ctor] .
+	--- MsgType, The origin of the msg, a list of references which we use to generate targets of a message
+	--- and a list of references
+	op @_::_::_::_@ : MsgType iNat ReferenceList ReferenceList -> Msg [ctor] .
 	
 	op _$_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
 	op _$_ : NeMsgList MsgList -> MsgList [ctor ditto] .
@@ -31,4 +33,6 @@ fmod MSG is protecting ACTOR .
 	vars MsgA : Msg .
 	vars MsgTA : MsgType .
 	vars MsgLiA : MsgList .
+
+	--- ########## EQS ##########
 endfm

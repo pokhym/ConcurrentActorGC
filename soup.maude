@@ -1,0 +1,181 @@
+load msg.maude
+
+fmod SOUP is
+	protecting MSG .
+--- ########## SORTS ##########
+	sorts NeSoup Soup iNatSoup .
+	--- ########## SUBSORTS ##########
+	subsorts ActorList MsgList < iNatSoup .
+
+	--- ########## OPS ##########
+	op mtSoup : -> Soup [ctor] .
+	--- op __ : ActorList MsgList -> Soup [ctor assoc id: mtSoup] .
+	--- op __ : NeSoup Soup -> Soup [ctor ditto] .
+	--- op __ : Soup NeSoup -> Soup [ctor ditto] .
+	op _#_||__ : iNat iNat ActorList MsgList -> iNatSoup [ctor] .
+
+	--- initial NatSoup state
+	op initiNatSoup : -> iNatSoup [ctor] .
+
+	--- This takes current unique actor id, current unique ref id,
+	--- source actor id, two reference lists (targets, ref list for targets)
+	op spawnMultipleActors(_,_,_,_) : iNat iNat iNat ReferenceList -> ActorList .
+	
+	--- ########## VARIABLES ##########
+	vars N M A B C : iNat .
+	vars RefLiA RefLiB : ReferenceList .
+
+	--- ########## EQ ##########
+	eq initiNatSoup = 0 # 0 || newActor(0, 0 :: 0 -> 0) mtMsgList .
+
+	--- Note that when we create a message the list of reference that can be
+	--- added to a message must be all references that an actor holds (accessible)
+	eq spawnMultipleActors(N, M, B, mtRefList) = mtActorList .
+	eq spawnMultipleActors(N, M, B, ((A :: B -> C), RefLiA)) = 
+		spawn(s N, (s M :: s N -> B)) ; spawnMultipleActors(s N, s M , B, RefLiA) .
+endfm
+
+mod SOUP-STATE is
+	protecting SOUP .
+
+	--- ########## VARIABLES ##########
+	vars N M A B C D E F G H I : iNat .
+	vars AcLiA AcLiB : ActorList .
+	vars AcA AcB : Actor .
+	vars MsgA : Msg .
+	vars MsgTypeA : MsgType .
+	vars MsgLiA : MsgList .
+	vars SoupA : Soup .
+	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH RefLiI RefLiJ RefLiK RefLiL RefLiM RefLiN : ReferenceList . 
+	vars MapNatRefLiA MapNatRefLiB : Map{TrivAsiNat, TrivAsReferenceList} .
+	--- MsgType ActorList ReferenceList MsgList
+	
+	--- ########## RULES ##########
+	--- rl [CreateAppMsgWithReachable] : N # M || AcLiA MsgLiA => N # M || AcLiA MsgLiA .
+	--- This creates an application message where we hre sending a subset of references from actor A to a target D
+	--- Note that the target D must be reachable from A
+	--- There are two cases
+	--- 	1. where we actually send the reference we are using to check a reachable actor
+	---		2. where we do not send the reference we are using to check a reachable actor
+	--- rl [CreateAppMsgWithReachable] : N # M || < i: A 
+	--- 										| sn: B 
+	--- 										| r: RefLiA, RefLiH 
+	--- 										| dr: RefLiB 
+	--- 										| o: RefLiC 
+	--- 										| ro: RefLiD 
+	--- 										| m: RefLiE	
+	--- 										| tr: RefLiF 
+	--- 										| owr: RefLiG 
+	--- 										| oa: MapNatRefLiA > ; AcLiA MsgLiA
+	--- 										=> N # M || 
+	--- 										< i: A 
+	--- 										| sn: B 
+	--- 										| r: RefLiA, RefLiH 
+	--- 										| dr: RefLiB 
+	--- 										| o: RefLiC 
+	--- 										| ro: RefLiD 
+	--- 										| m: RefLiE	
+	--- 										| tr: RefLiF 
+	--- 										| owr: RefLiG 
+	--- 										| oa: MapNatRefLiA > ; AcLiA (@ App :: A :: RefLiA :: RefLiA, RefLiH @) $ MsgLiA .
+	--- rl [CreateAppMsgNoReachable] : N # M || < i: A 
+	--- 										| sn: B 
+	--- 										| r: RefLiA, RefLiH 
+	--- 										| dr: RefLiB 
+	--- 										| o: RefLiC 
+	--- 										| ro: RefLiD 
+	--- 										| m: RefLiE	
+	--- 										| tr: RefLiF 
+	--- 										| owr: RefLiG 
+	--- 										| oa: MapNatRefLiA > ; AcLiA MsgLiA
+	--- 										=> N # M || 
+	--- 										< i: A 
+	--- 										| sn: B 
+	--- 										| r: RefLiA, RefLiH 
+	--- 										| dr: RefLiB 
+	--- 										| o: RefLiC 
+	--- 										| ro: RefLiD 
+	--- 										| m: RefLiE	
+	--- 										| tr: RefLiF 
+	--- 										| owr: RefLiG 
+	--- 										| oa: MapNatRefLiA > ; AcLiA (@ App :: A :: RefLiA :: RefLiH @) $ MsgLiA .
+
+	--- We pull an App message from the soup and operate on it
+	--- An App message can do any combination of the following things all at once
+	--- - Add all references in the message to the target actor’s state; AND
+	--- - Create new App messages, each of which may contain a set of new references; AND
+	--- - Spawn new actors; AND
+	--- - Create new Req_Release messages.
+
+	--- In the case of spawning only we ignore the "target" list (RefLiA) and spawn new Actors into the soup
+	--- Each new actor in RefLiA will have  a reference to A
+	--- rl [ParseAppSpawnOnly] : N # M || AcLiA (@ App :: A :: RefLiA :: RefLiB @) $ MsgLiA 
+	--- 	=> (N + lenRL(RefLiB)) # M + (lenRL(RefLiB)) || spawnMultipleActors(N, M, A, RefLiB) ; AcLiA  MsgLiA .
+
+	--- op fresh(_,_) : ActorList ActorList -> Pred .
+	--- eq fresh()
+	rl [testSpawn] : N # M || AcLiA MsgA $ MsgLiA => N # M || AcLiB:ActorList ; AcLiA MsgLiA .
+--- 	--- rl [ParseAppReqReleaseOnly]
+--- 	--- rl [ParseAppNewAppOnly]
+
+--- 	--- rl [ParseAppSpawnReqRelease]
+--- 	--- rl [ParseAppSpawnNewApp]
+--- 	--- rl [ParseAppReqReleaseNewApp]
+
+--- 	--- rl [ParseAppAll3]
+
+--- 	--- MsgLiA 
+--- 	--- (@ App :: N :: RefLiH :: mtMsgList @) 
+
+--- 	--- parse App msg rule
+--- 	--- pull a message from the soup, if the type is app, and the msg's target is an actor
+--- 	--- then we need to spawn an actorlist.  to handle multiple actors we have spawnActorList in G
+--- 	--- spawnActorList(Owner:Actor, Curr:Nat, Final:Nat, RefList)
+--- 	--- this will spawn Final-Curr actors with RefList references and add them to the soup
+--- 	--- spawnActorList(Owner, Curr, Final, RefList) =
+--- 	--- if Curr != Final then
+--- 	--- 	spawnActor(Owner,Curr,RefList) spawnActorList(Owner, Curr + 1, Final, RefList)
+--- 	--- fi .
+--- 	--- however we must also remember to edit Owner from the pool to add a New ReferenceList where all
+--- 	--- entries are N :: Owner -> Ref (in RefList)
+--- 	--- these will use the two natural number counters in a NatConfiguration
+
+--- 	--- parse ReleaseRecv Msg
+
+--- 	--- parse AckRelease Msg
+
+--- 	--- createRef rule
+--- 	--- This will call createRef for an actor which will edit its own "owners" list of things to send
+--- 	--- this will not generate a message
+
+--- 	--- release rule
+--- 	--- this will not only call the release op but also the update info as long as the reference we want to release
+--- 	--- exists in the actor we are trying to check
+endm
+
+--- mod SOUP-STOP is
+--- 	protecting SOUP .
+--- endm
+
+--- mod RAND is protecting INAT .
+--- 	sort iNatStop .
+--- 	op rand : -> iNat .
+--- 	op {_} : iNat -> iNatStop [ctor] .
+--- 	vars N : iNat .
+--- 	rl [gen0] : rand => 0 .
+--- 	rl [gen1] : N => s N .
+--- endm
+
+--- mod RAND-STOP is protecting RAND .
+--- 	vars N : iNat .
+--- 	rl [stop] : N => { N } .
+--- endm
+
+--- red initiNatSoup .
+search [100] initiNatSoup =>+ S:iNatSoup .
+
+--- eq spawnMultipleActors(N, M, B, ((A :: B -> C), RefLiA))
+
+--- red spawnMultipleActors(0, 0, s s s 0, mtRefList) .
+--- red spawnMultipleActors(0, 0, s s s 0, ((0 :: s s s 0 -> 0), (0 :: s s s 0 -> s 0))) .
+--- red spawnMultipleActors(0, 0, s s s 0, ((0 :: s s s 0 -> 0), (s 0 :: s s s 0 -> s 0))) .

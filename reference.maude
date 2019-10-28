@@ -20,6 +20,8 @@ fmod REFERENCE is protecting INAT .
 	op remList(_,_) : ReferenceList ReferenceList -> ReferenceList .
 	--- Performs set union on reference lists based upon their membership
 	op _U_ : ReferenceList ReferenceList -> ReferenceList .
+	--- This returns the length of a reference list
+	op lenRL(_) : ReferenceList -> iNat .
 
 	--- ########## VARS ##########
 	vars x A B C D : iNat .
@@ -44,6 +46,9 @@ fmod REFERENCE is protecting INAT .
 	eq mtRefList U RefLiA = RefLiA .
 	eq (RefA, RefLiA) U (RefA, RefLiB) = RefA, (RefLiA U RefLiB) .
 	eq (RefA, RefLiA) U (RefB, RefLiB) = RefA, RefB, (RefLiA U RefLiB) .
+
+	eq lenRL(mtRefList) = 0 .
+	eq lenRL(RefA, RefLiA) = s lenRL(RefLiA) .
 endfm
 
 --- red mtRefList, (0 :: 0 -> 0) .
@@ -69,3 +74,8 @@ endfm
 --- --- below case covers duplicates 
 --- red ((0 :: 0 -> 0),(s 0 :: 0 -> 0)) U ((s s 0 :: 0 -> 0),(s s s 0 :: 0 -> 0)) .
 --- red ((0 :: 0 -> 0),mtRefList,(s 0 :: 0 -> 0)) U ((s 0 :: 0 -> 0),(s s s 0 :: 0 -> 0)) .
+
+--- red lenRL(mtRefList) .
+--- red lenRL(0 :: 0 -> 0) .
+--- red lenRL(mtRefList, (0 :: 0 -> 0)) .
+--- red lenRL((0 :: 0 -> 0), mtRefList, (s 0 :: s 0 -> s 0)) .

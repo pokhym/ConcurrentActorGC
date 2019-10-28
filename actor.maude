@@ -1,7 +1,6 @@
 ***(
 	TODO:
-	still need to do _,_ uniqueness?
-	remove onack map? would it be easier to prove?
+	constants in PRED should be "true" and "false" for rltool to do auto matching
 )
 
 set include BOOL off .
