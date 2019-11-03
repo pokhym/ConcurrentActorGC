@@ -121,6 +121,8 @@ fmod ACTOR is
 	op getCreated(_) : ReferenceListUnion -> ReferenceList .
 	--- getSent
 	op getSent(_) : ReferenceListUnion -> ReferenceList .
+	--- lenAL
+	op lenAL(_) : ActorList -> iNat .
 
 	--- ########## VARS ##########
 	vars S N X Y A B C D E F G : iNat .
@@ -159,7 +161,7 @@ fmod ACTOR is
 		| oa: insert(s C, (releasingRefList(B, RefLiB) U sentRefList(B, RefLiE, RefLiG) U createdRefList(B, RefLiE, RefLiF)),MapNatRefLiA) | snap: MapNatRefLiB > .
 	--- implementation of releaseReferenceList
 	eq releaseReferenceList(AcA, mtRefList) = AcA .
-	eq releaseReferenceList(AcA, ((X :: A -> B), RefLiA)) = releaseReferenceList(updateInfo(release(AcA, (A :: A -> B)), B), RefLiA) .
+	eq releaseReferenceList(AcA, ((X :: A -> B), RefLiA)) = releaseReferenceList(updateInfo(release(AcA, (X :: A -> B)), B), RefLiA) .
 	--- implementation of releaseRecv
 	--- remove released (first for loop)
 	--- termination when releasing list is empty
@@ -263,6 +265,10 @@ fmod ACTOR is
 	eq getCreated(RefLiA U RefLiB U RefLiC) = RefLiB .
 	--- getSent
 	eq getSent(RefLiA U RefLiB U RefLiC) = RefLiC .
+
+	--- implementation of lenAL
+	eq lenAL(mtActorList) = 0 .
+	eq lenAL(AcA ; AcLiA) = s lenAL(AcLiA) .
 endfm
 
 --- --- unchanged

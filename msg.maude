@@ -9,10 +9,10 @@ fmod MSG is protecting ACTOR .
 	--- op mtMsg : -> Msg [ctor] .
 	op mtMsgList : -> MsgList [ctor] .
 	--- Message Types
-	op App : -> MsgType .
-	op ReleaseReq : -> MsgType .
-	op ReleaseRecv : -> MsgType .
-	op AckRelease : -> MsgType .
+	op App : -> MsgType . --- app message
+	op ReleaseReq : -> MsgType . --- created by app messages to trigger update info
+	op ReleaseRecv : -> MsgType . --- sent by updateInfo telling other actors they can release
+	op AckRelease : -> MsgType . --- sent by actors receiving ack release to empty data structures
 	--- Messages
 	--- The three types are App, Req_Release, and Ack_Release. 
 	--- I guess there should be another kind of message for asking an actor to take a snapshot?
@@ -22,8 +22,8 @@ fmod MSG is protecting ACTOR .
 	--- - Spawn new actors; AND
 	--- - Create new Req_Release messages.
 	--- TODO: This means that we need newActor to handle cases where ActorList is MT
-	--- MsgType, the destination of the msg, origin of the message, the sn, and a reference list
-	op @_::_::_::_@ : MsgType iNat iNat ReferenceList -> Msg [ctor] .
+	--- MsgType, the destination of the msg, origin of the message, the sn, snapid, and a reference list
+	op @_:: dst _:: ori _:: sn _ :: sid _ :: r _@ : MsgType iNat iNat iNat iNat ReferenceList -> Msg [ctor] .
 	
 	op _$_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
 	op _$_ : NeMsgList MsgList -> MsgList [ctor ditto] .

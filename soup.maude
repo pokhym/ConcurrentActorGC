@@ -1,13 +1,14 @@
 ***(
 	untested functions
-	op checkSubsetRefMsg(_,_) : ReferenceList MsgList -> Pred .
-	op checkDestMsg(_,_) : ReferenceList MsgList -> Pred .
-	op checkMsgTypeApp(_) : MsgList -> Pred .
-	op createAppMessage?(_,_) : ReferenceList MsgList -> Pred .
+	pretty much all the preds
 
-	op checkReleaseRecvFormat(_,_,_) : Actor iNat MsgList -> Pred .
-	op createReleaseRecvMessage?(_,_,_) : Actor iNat MsgList -> Pred .
 
+	Questions:
+	When to call createRef and receive?
+	in creating releasereq do the references come from other actor's reference list? or owners?
+	is the new spawn actor thing the correct way oriented for new references?
+	
+	ask about the pred ideas?
 )
 
 set include BOOL off .
@@ -25,7 +26,7 @@ fmod SOUP is
 	--- op __ : ActorList MsgList -> Soup [ctor assoc id: mtSoup] .
 	--- op __ : NeSoup Soup -> Soup [ctor ditto] .
 	--- op __ : Soup NeSoup -> Soup [ctor ditto] .
-	op _||_||_ : iNat ActorList MsgList -> Soup [ctor] .
+	op __||_||_ : iNat iNat ActorList MsgList -> Soup [ctor] .
 
 	--- initial NatSoup state
 	op initSoup : -> Soup [ctor] .
@@ -47,21 +48,34 @@ fmod SOUP is
 	op checkMsgTypeReleaseRecv(_) : MsgList -> Pred . 
 	--- Given an actor (after update info) and the sn before update info, and a message list
 	--- check that all the messages generated have the correct information in each field
-	op checkReleaseRecvFormat(_,_,_) : Actor iNat MsgList -> Pred .
-	op createReleaseRecvMessage?(_,_,_) : Actor iNat MsgList -> Pred .
+	op checkReleaseRecvFormat(_,_) : Actor MsgList -> Pred .
+	op createReleaseRecvMessage?(_,_) : Actor MsgList -> Pred .
 
-	--- This takes current unique actor id, current unique ref id,
-	--- source actor id, two reference lists (targets, ref list for targets)
-	op spawnMultipleActors(_,_,_,_) : iNat iNat iNat ReferenceList -> ActorList .
-	
+	--- !!!!!!!!!!!!!! BELOW ARE OPS TO CHECK APP SPAWN PARSING !!!!!!!!!!!!!!
+	op checkMapIsEmpty(_) : Map{TrivAsiNat, TrivAsReferenceList} -> Pred .
+	op checkMapIsEmpty2(_) : Map{TrivAsiNat, TrivAsReferenceList2} -> Pred .
+	--- this checks if every actor spawned in the actor list is valid
+	op checkNewActorId(_,_,_) : Actor ActorList iNat -> Pred .
+	--- Origin actor, new actors, and the last unique actor id, last unique RefID
+	op checkNewActor?(_,_,_,_) : Actor ActorList iNat iNat -> Pred .
+
+	--- !!!!!!!!!!!!!! BELOW ARE OPS TO CHECK APP CREATE RELEASEREQ PARSING !!!!!!!!!!!!!!
+	op checkMsgTypeReleaseReq(_) : MsgList -> Pred .
+	op checkReleaseReqFormat(_,_) : ActorList MsgList -> Pred .
+	op checkCreateReleaseReq?(_,_) : ActorList MsgList -> Pred .
+
+	op checkParseApp?(_,_,_,_,_,_,_,_) : Actor ActorList iNat iNat ReferenceList MsgList ActorList MsgList -> Pred .
+
 	--- ########## VARIABLES ##########
-	vars X N M A B C D : iNat .
-	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH RefLiI RefLiJ RefLiK RefLiL RefLiM RefLiN : ReferenceList . 
+	vars X N M A B C D E F G H : iNat .
+	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH RefLiI RefLiJ RefLiK RefLiL RefLiM RefLiN RefLiO RefLiP RefLiQ RefLiR : ReferenceList . 
 	vars MsgA : Msg .
 	vars MsgTA : MsgType .
-	vars MsgLiA MsgLiB : MsgList .
+	vars MsgLiA MsgLiB MsgLiC : MsgList .
 	vars AcA : Actor .
-	vars MapNatRefLiA MapNatRefLiB : Map{TrivAsiNat, TrivAsReferenceList} .
+	vars NewAcLi AcLiA AcLiB : ActorList .
+	vars MapNatRefLiA MapNatRefLiC : Map{TrivAsiNat, TrivAsReferenceList} .
+	vars MapNatRefLiB MapNatRefLiD : Map{TrivAsiNat, TrivAsReferenceList2} .
 
 	--- ########## EQ ##########
 	--- eq initSoup = s 0 || newActor(0, 0 :: 0 -> 0) || mtMsgList .
@@ -74,39 +88,55 @@ fmod SOUP is
 	eq checkSubsetRefMsg(mtRefList, mtMsgList) = tt .
 	eq checkSubsetRefMsg(mtRefList, MsgLiA) = ff .
 	eq checkSubsetRefMsg(RefLiA, mtMsgList) = tt .
-	eq checkSubsetRefMsg(RefLiA, ( (@ App :: A :: B :: RefLiB @) $ MsgLiA ) ) = 
+	eq checkSubsetRefMsg(RefLiA, ( (@ App :: dst A :: ori B :: sn C :: sid D :: r RefLiB @) $ MsgLiA ) ) = 
 		checkSubsetRefApp(RefLiA, RefLiB) and checkSubsetRefMsg(RefLiA, MsgLiA) .
 	
 	eq checkDestMsg(mtRefList, mtMsgList) = tt .
 	eq checkDestMsg(mtRefList, MsgLiA) = ff .
 	eq checkDestMsg(RefLiA, mtMsgList) = tt .
-	eq checkDestMsg(RefLiA, ( (@ App :: A :: B :: RefLiB @) $ MsgLiA )) = 
+	eq checkDestMsg(RefLiA, ( (@ App :: dst A :: ori B :: sn C :: sid D :: r RefLiB @) $ MsgLiA )) = 
 		checkDestMsgApp(RefLiA, A) and checkDestMsg(RefLiA, MsgLiA) .
 
 	eq checkMsgTypeApp(mtMsgList) = tt .	
-	eq checkMsgTypeApp((@ MsgTA :: A :: B :: RefLiB @) $ MsgLiA) = 
+	eq checkMsgTypeApp((@ MsgTA :: dst A :: ori B :: sn C :: sid D :: r RefLiB @) $ MsgLiA) = 
 		(App ~MsgType MsgTA) and checkMsgTypeApp(MsgLiA) .
 
 	eq createAppMessage?(RefLiA, MsgLiB) = 
 		checkDestMsg(RefLiA, MsgLiB) and ( checkSubsetRefMsg(RefLiA, MsgLiB) and checkMsgTypeApp(MsgLiB) ) .
 
-	--- message list is empty and we have checked all messages by asserting B and C are equal
-	eq checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C, mtMsgList) = tt and (C ~iN B) .
-	--- message list is non-empty but we have already reached the end
-	eq checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C, MsgLiA) =  (lenML(MsgLiA) ~iN 0) and (C ~iN B) .
-	eq checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C, ((@ MsgTA :: A :: C :: RefLiH @) $ MsgLiA)) = (MapNatRefLiA[C] ~RL RefLiB) and checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, s C, MsgLiA) .
-	
+
+	--- check that for each D ~iN B, on_ack[D] is equal to the reference list in the message
+	--- termination condition is when the MsgLiA is empty and D = B
+	--- TODO: Do we need to check the length? Currently it does not
+	eq checkReleaseRecvFormat(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, mtMsgList) = tt .
+	eq checkReleaseRecvFormat(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, (@ MsgTA :: dst E :: ori F :: sn G :: sid H :: r RefLiJ @) $ MsgLiA) = 
+		(RefLiJ ~RL (getReleasing(MapNatRefLiA[G]), getCreated(MapNatRefLiA[G]), getSent(MapNatRefLiA[G]))) and checkReleaseRecvFormat(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, MsgLiA) .
+	--- check that all messages generated are of type ReleaseRecv	
 	eq checkMsgTypeReleaseRecv(mtMsgList) = tt .
-	eq checkMsgTypeReleaseRecv((@ MsgTA :: A :: B :: RefLiB @) $ MsgLiA) = 
+	eq checkMsgTypeReleaseRecv((@ MsgTA :: dst A :: ori B :: sn C :: sid D :: r RefLiB @) $ MsgLiA) = 
 		(ReleaseRecv ~MsgType MsgTA) and checkMsgTypeReleaseRecv(MsgLiA) .
+	eq createReleaseRecvMessage?(AcA, MsgLiA) = checkMsgTypeReleaseRecv(MsgLiA) and checkReleaseRecvFormat(AcA, MsgLiA) .
 
-	eq createReleaseRecvMessage?(AcA, A, MsgLiA) = checkMsgTypeReleaseRecv(MsgLiA) and checkReleaseRecvFormat(AcA, A, MsgLiA) .
+	--- this checks if a given map is empty
+	eq checkMapIsEmpty(empty) = tt .
+	eq checkMapIsEmpty(MapNatRefLiA) = ff .
+	eq checkMapIsEmpty2(empty) = tt .
+	eq checkMapIsEmpty2(MapNatRefLiB) = ff .
+	--- new unique actor id, all lists except RefLiJ are empty, and RefLiJ is equal to (X :: D -> A)
+	--- and that the original actor A has (X :: A -> D)
+	eq checkNewActor?(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, < i: D | sn: E | sid: F | r: (E :: F -> G) | dr: RefLiK | o: RefLiL | ro: RefLiM | m: RefLiN | tr: RefLiO | owr: RefLiP | owa: RefLiQ | ta: RefLiR | oa: MapNatRefLiC | snap: MapNatRefLiD > ; NewAcLi, N, M) = 
+		(D ~iN s N) and ((RefLiK ~RL mtRefList) and ((RefLiL ~RL mtRefList) and ((RefLiM ~RL mtRefList) and ((RefLiN ~RL mtRefList) and ((RefLiO ~RL mtRefList) and ((RefLiP ~RL mtRefList) and ((RefLiQ ~RL mtRefList) and ((RefLiR ~RL mtRefList) and (checkMapIsEmpty(MapNatRefLiC) and (checkMapIsEmpty2(MapNatRefLiD) and (((E :: F -> G) ~RL (s M :: D -> A)) and (((s s M :: A -> D) in RefLiA) and checkNewActor?(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, < i: D | sn: E | sid: F | r: (E :: F -> G) | dr: RefLiK | o: RefLiL | ro: RefLiM | m: RefLiN | tr: RefLiO | owr: RefLiP | owa: RefLiQ | ta: RefLiR | oa: MapNatRefLiC | snap: MapNatRefLiD > ; NewAcLi, s N, s s M))))))))))))) .
+	eq checkNewActor?(AcA, mtActorList, N, M) = tt .
 
-	--- Note that when we create a message the list of reference that can be
-	--- added to a message must be all references that an actor holds (accessible)
-	eq spawnMultipleActors(N, M, B, mtRefList) = mtActorList .
-	eq spawnMultipleActors(N, M, B, ((A :: B -> C), RefLiA)) = 
-		spawn(s N, (s M :: s N -> B)) ; spawnMultipleActors(s N, s M , B, RefLiA) .
+	--- this checks whether each message created was of type ReleaseReq
+	eq checkMsgTypeReleaseReq(mtMsgList) = tt .
+	eq checkMsgTypeReleaseReq(@ MsgTA :: dst A :: ori B :: sn C :: sid D :: r RefLiJ @ $ MsgLiA) = (MsgTA ~MsgType ReleaseReq) and checkMsgTypeReleaseReq(MsgLiA) .
+	--- this checks for a well formatted release req message
+	eq checkReleaseReqFormat(AcLiA, mtMsgList) = tt .
+	eq checkReleaseReqFormat((AcLiA ; (< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiB)), (@ MsgTA :: dst A :: ori B :: sn C :: sid D :: r RefLiJ @ $ MsgLiA)) = (RefLiJ in RefLiA) and checkReleaseReqFormat((AcLiA ; (< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiB)), MsgLiA) .
+	eq checkCreateReleaseReq?(AcLiA, MsgLiA) = checkMsgTypeReleaseReq(MsgLiA) and checkReleaseReqFormat(AcLiA, MsgLiA) .
+
+	eq checkParseApp?(AcA, NewAcLi, N, M, RefLiA, MsgLiA, AcLiA, MsgLiB) = checkNewActor?(AcA, NewAcLi, N, M) and (createAppMessage?(RefLiA, MsgLiA) and checkCreateReleaseReq?(AcLiA, MsgLiB)) .
 endfm
 
 --- tt
@@ -119,14 +149,15 @@ mod SOUP-STATE is
 
 	--- ########## VARIABLES ##########
 	vars N M A B C D E F G H I : iNat .
-	vars AcLiA AcLiB : ActorList .
+	vars AcLiA AcLiB NewAcLi : ActorList .
 	vars AcA AcB : Actor .
 	vars MsgA : Msg .
 	vars MsgTypeA : MsgType .
-	vars MsgLiA MsgLiB : MsgList .
+	vars MsgLiA MsgLiB MsgLiC : MsgList .
 	vars SoupA : Soup .
-	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH RefLiI RefLiJ RefLiK RefLiL RefLiM RefLiN : ReferenceList . 
-	vars MapNatRefLiA MapNatRefLiB : Map{TrivAsiNat, TrivAsReferenceList} .
+	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH RefLiI RefLiJ RefLiK RefLiL RefLiM RefLiN NewRefLi : ReferenceList . 
+	vars MapNatRefLiA : Map{TrivAsiNat, TrivAsReferenceList} .
+	vars MapNatRefLiB : Map{TrivAsiNat, TrivAsReferenceList2} .
 	--- MsgType ActorList ReferenceList MsgList
 	
 	--- ########## RULES ##########
@@ -136,39 +167,54 @@ mod SOUP-STATE is
 	---		2. new messages to be added must have references which are a subset of A (checkSubsetRefMsg)
 	---		3. new messages to be added must have type App checkMsgType
 	crl [createAppMessage] : 
-		N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || MsgLiA 
+		N M || < i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiA || MsgLiA 
 		=>
-			N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || MsgLiA $ MsgLiB
+		N M || < i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiA || MsgLiA $ MsgLiB
 			if createAppMessage?(RefLiA, MsgLiB) = tt .
 
 	--- This parses a ReleaseReq message generated by parsing an App message
-	--- releaseReferenceList will perform both release and updateInfo for all the references in the ReleaseReq message
+	--- releaseReferenceList will perform both release and updateInfo for all the references in the ReleaseRecv message
 	--- In addition we need to create a bunch of releaseRecv messages
 	--- Conditions to be fufilled
 	---		1. new messages must be of type ReleaseRecv (checkMsgTypeReleaseRecv)
 	---		2. new messsages must contain the correct infomation
 	---		3. the number of ReleaseRecv messages must be equal to the new_sn - old_sn
-	crl [parseReleaseReq] :
-		N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || @ ReleaseReq :: A :: C :: RefLiH @ $ MsgLiA
-		=> N || releaseReferenceList(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, RefLiH) ; AcLiA || MsgLiA $ MsgLiB 
-		if createReleaseRecvMessage?(releaseReferenceList(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, RefLiH), s B, MsgLiB) = tt .
+	--- TODO: THE RELEASEREQ MSG SN MUST BE LESS THAN THE ONE IN THE ACTOR
+	crl [releaseUpdateAndCreateReleaseRecv] :
+		N M || < i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiA || @ ReleaseReq :: dst A :: ori D :: sn E :: sid F :: r RefLiJ @ $ MsgLiA
+		=> 
+		N M || releaseReferenceList(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, RefLiJ) ; AcLiA || MsgLiA $ MsgLiB 
+		if createReleaseRecvMessage?(releaseReferenceList(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, RefLiJ), MsgLiB) = tt .
 	
-	--- crl [parseReleaseRecv] :
-
+	--- This parses a ReleaseRecv message generated by a Release call
+	--- this calls release recv for an actor on seq number E and also generates an AckRelease message 
+	rl [parseReleaseRecv] :
+		N M || < i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiA || @ ReleaseRecv :: dst A :: ori D :: sn E :: sid F :: r RefLiJ @ $ MsgLiA
+		=>
+		N M || releaseRecv(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, E) ; AcLiA || MsgLiA $ @ AckRelease :: dst D :: ori A :: sn E :: sid F :: r RefLiJ @ .
+	
 	--- This parses an AckRelease message generated by a ReleaseRecv message
 	--- ackRelease is called on the actor to release the sn mapped to a reference list in our map
 	--- we then delete our message from the message list
-	--- TODO: THIS HAS NO SNAPSHO FUNCTIONALITY YET
 	rl [parseAckRelease] :
-		N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || @ AckRelease :: A :: C :: RefLiH @ $ MsgLiA
+		N M || < i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiA || @ AckRelease :: dst A :: ori D :: sn E :: sid F :: r RefLiJ @ $ MsgLiA
 		=>
-		N || ackRelease(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C) ; AcLiA || MsgLiA .
+		N M || ackRelease(< i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, (getReleasing(MapNatRefLiA[E]), (getCreated(MapNatRefLiA[E]), getSent(MapNatRefLiA[E]))), D, E, F) ; AcLiA || MsgLiA .
 	
-	--- this may
-	--- 	1. create more App messages
-	---		2. spawn more actors
+	--- This parses an App messaged generated by another App message
+	--- Recall that an App message may do any combination of the 3
+	---		1. create more App messages (createAppMessage?)
+	---		2. spawn more actors (checkNewActor?)
 	---		3. create release req messages
-	--- crl [parseApp] :
+	--- we must also increment N and M our unique ID counters a sufficient number of times
+	--- Actor id is incremented by the number of new actors we spawn
+	--- Ref ID is incremented by double the amount of the new actors because the origin actor will create one new reference and the new actor will
+	--- also create a new reference therefore we need to increment by double
+	crl [parseApp] :
+		N M || < i: A | sn: B | sid: C | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; AcLiA ; AcLiB || @ App :: dst A :: ori D :: sn E :: sid F :: r RefLiJ @ $ MsgLiA
+		=>
+		(N + lenAL(NewAcLi))  ((M + lenAL(NewAcLi)) + lenAL(NewAcLi)) || < i: A | sn: B | sid: C | r: NewRefLi, RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB > ; NewAcLi ; AcLiA ; AcLiB || MsgLiA $ MsgLiB $ MsgLiC
+		if checkParseApp?(< i: A | sn: B | sid: C | r: NewRefLi, RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | owa: RefLiH | ta: RefLiI | oa: MapNatRefLiA | snap: MapNatRefLiB >, NewAcLi, N, M, RefLiA, MsgLiB, AcLiB, MsgLiC) = tt .
 
 	--- create ref rule
 	--- receive rule
@@ -176,7 +222,7 @@ mod SOUP-STATE is
 endm
 
 --- red initSoup .
---- search [100] initSoup =>+ S:Soup .
+search [100] initSoup =>+ S:Soup .
 
 	--- rl [CreateAppMsgWithReachable] : N # M || AcLiA MsgLiA => N # M || AcLiA MsgLiA .
 	--- This creates an application message where we hre sending a subset of references from actor A to a target D
