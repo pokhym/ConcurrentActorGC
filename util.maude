@@ -8,6 +8,7 @@ fmod PRED is
 	op tt : -> Pred [ctor] .
 	op ff : -> Pred [ctor] .
 	op _~_ : Pred Pred -> Pred [comm] .
+	op !_ : Pred -> Pred .
 	--- ########## VARS ##########
 	vars P1 P2 : Pred .
     --- ########## EQS ##########
@@ -23,6 +24,9 @@ fmod PRED is
 	eq tt ~ ff = ff .
 	eq ff ~ tt = ff .
 	eq ff ~ ff = ff .
+
+	eq !(ff) = tt .
+	eq !(tt) = ff .
 endfm
 
 fmod INAT is
@@ -42,6 +46,11 @@ fmod INAT is
 	eq N + 0 = N .
 	eq 0 + N = N .
 	eq N + (s M) = s (N + M) .
+
+	op _-_ : iNat iNat -> iNat .
+	eq N - 0 = N .
+	eq 0 - (s N) = 0 .
+	eq (s N) - (s M) = N - M .
 endfm
 
 ***(
@@ -83,3 +92,11 @@ endfm
 --- red s(0) + s(s(0)) .
 --- red (s(0) + s(s(0))) + s(0) .
 --- red s(0) + (s(0) + s(s(0))) .
+
+--- red !(ff) .
+--- red !(tt) .
+
+--- red (s (s 0)) - 0 .
+--- red (s s 0) - (s 0) .
+--- red (s s 0) - (s s 0) .
+--- red (s 0) - (s s s 0) .

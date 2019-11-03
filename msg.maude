@@ -22,7 +22,7 @@ fmod MSG is protecting ACTOR .
 	--- - Spawn new actors; AND
 	--- - Create new Req_Release messages.
 	--- TODO: This means that we need newActor to handle cases where ActorList is MT
-	--- MsgType, the destination of the msg, the sn, and a reference list
+	--- MsgType, the destination of the msg, origin of the message, the sn, and a reference list
 	op @_::_::_::_@ : MsgType iNat iNat ReferenceList -> Msg [ctor] .
 	
 	op _$_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
