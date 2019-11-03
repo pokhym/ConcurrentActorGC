@@ -1,3 +1,5 @@
+set include BOOL off .
+
 load util.maude
 
 fmod REFERENCE is protecting INAT .

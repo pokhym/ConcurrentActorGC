@@ -1,3 +1,5 @@
+set include BOOL off .
+
 fmod PRED is
 	--- ########## SORTS ##########
 	sorts Pred .

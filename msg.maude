@@ -1,3 +1,5 @@
+set include BOOL off .
+
 load actor.maude
 
 fmod MSG is protecting ACTOR .
