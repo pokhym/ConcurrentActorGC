@@ -149,3 +149,6 @@ set clear rules off .
 --- --- | oa: s 0 |-> (0 :: 0 -> s 0),(s 0 :: s 0 -> s 0),(s s s 0 :: s s s 0 -> s 0),(s s s s 0 :: s s s s 0 -> s 0),s s s s s 0 :: s 0 -> s s s 0
 --- --- >
 --- red updateInfo(< i: 0 | sn: 0 | r: mtRefList | dr: (0 :: 0 -> s 0),(s 0 :: s 0 -> s 0),(s s 0 :: s s 0 -> s s 0) | o: mtRefList | ro: mtRefList | m: (s s s 0 :: s s s 0 -> s 0),(s s s s 0 :: s s s s 0 -> s 0),(s s s s s 0 :: s 0 -> s s s 0),(s s s s s s 0 :: s s s s s s 0 -> s s s s s s s 0) | tr: mtRefList | owr: mtRefList | oa: empty >, s 0) .
+
+
+--- red ((0 :: 0 -> s 0),s 0 :: s 0 -> s 0) U s s s s s 0 :: s 0 -> s s s 0 U (s s s 0 :: s s s 0 -> s 0) .

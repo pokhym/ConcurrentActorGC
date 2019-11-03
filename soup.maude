@@ -1,32 +1,106 @@
+***(
+	untested functions
+	op checkSubsetRefMsg(_,_) : ReferenceList MsgList -> Pred .
+	op checkDestMsg(_,_) : ReferenceList MsgList -> Pred .
+	op checkMsgTypeApp(_) : MsgList -> Pred .
+	op createAppMessage?(_,_) : ReferenceList MsgList -> Pred .
+
+	op checkReleaseRecvFormat(_,_,_) : Actor iNat MsgList -> Pred .
+	op createReleaseRecvMessage?(_,_,_) : Actor iNat MsgList -> Pred .
+
+)
+
+set include BOOL off .
 load msg.maude
 
 fmod SOUP is
 	protecting MSG .
 --- ########## SORTS ##########
-	sorts NeSoup Soup iNatSoup .
+	sorts Soup .
 	--- ########## SUBSORTS ##########
-	subsorts ActorList MsgList < iNatSoup .
+	--- subsorts ActorList MsgList < Soup .
 
 	--- ########## OPS ##########
 	op mtSoup : -> Soup [ctor] .
 	--- op __ : ActorList MsgList -> Soup [ctor assoc id: mtSoup] .
 	--- op __ : NeSoup Soup -> Soup [ctor ditto] .
 	--- op __ : Soup NeSoup -> Soup [ctor ditto] .
-	op _#_||__ : iNat iNat ActorList MsgList -> iNatSoup [ctor] .
+	op _||_||_ : iNat ActorList MsgList -> Soup [ctor] .
 
 	--- initial NatSoup state
-	op initiNatSoup : -> iNatSoup [ctor] .
+	op initSoup : -> Soup [ctor] .
+
+	--- !!!!!!!!!!!!!! BELOW ARE OPS TO CHECK APP MSG CREATION !!!!!!!!!!!!!!
+	--- Given a r from actor A, and a MsgList M we check that
+	--- 	1. the ReferenceList in each Msg is a subset of A's reachable refs
+	op checkSubsetRefMsg(_,_) : ReferenceList MsgList -> Pred .
+	--- Given a r from actor A, and a MsgList M we check that
+	---		1. Each message has a destination in r of A (rechable)
+	op checkDestMsg(_,_) : ReferenceList MsgList -> Pred .
+	--- Given a MsgList M we check that every message is of type App
+	op checkMsgTypeApp(_) : MsgList -> Pred .
+
+	op createAppMessage?(_,_) : ReferenceList MsgList -> Pred .
+
+	--- !!!!!!!!!!!!!! BELOW ARE OPS TO CHECK APP RELEASEREQ PARSING !!!!!!!!!!!!!!
+	--- Given a message list M check that all messages are of type ReleaseRecv
+	op checkMsgTypeReleaseRecv(_) : MsgList -> Pred . 
+	--- Given an actor (after update info) and the sn before update info, and a message list
+	--- check that all the messages generated have the correct information in each field
+	op checkReleaseRecvFormat(_,_,_) : Actor iNat MsgList -> Pred .
+	op createReleaseRecvMessage?(_,_,_) : Actor iNat MsgList -> Pred .
 
 	--- This takes current unique actor id, current unique ref id,
 	--- source actor id, two reference lists (targets, ref list for targets)
 	op spawnMultipleActors(_,_,_,_) : iNat iNat iNat ReferenceList -> ActorList .
 	
 	--- ########## VARIABLES ##########
-	vars N M A B C : iNat .
-	vars RefLiA RefLiB : ReferenceList .
+	vars X N M A B C D : iNat .
+	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH RefLiI RefLiJ RefLiK RefLiL RefLiM RefLiN : ReferenceList . 
+	vars MsgA : Msg .
+	vars MsgTA : MsgType .
+	vars MsgLiA MsgLiB : MsgList .
+	vars AcA : Actor .
+	vars MapNatRefLiA MapNatRefLiB : Map{TrivAsiNat, TrivAsReferenceList} .
 
 	--- ########## EQ ##########
-	eq initiNatSoup = 0 # 0 || newActor(0, 0 :: 0 -> 0) mtMsgList .
+	--- eq initSoup = s 0 || newActor(0, 0 :: 0 -> 0) || mtMsgList .
+
+	--- 3 cases to consider
+	--- 	1. reference list is empty therefore we fail
+	--- 	2. if the message list is empty then we fufill the subset req
+	--- 	3. both are non-empty we must check the subset relation
+	--- 	4. both are empty therefore we can have true
+	eq checkSubsetRefMsg(mtRefList, mtMsgList) = tt .
+	eq checkSubsetRefMsg(mtRefList, MsgLiA) = ff .
+	eq checkSubsetRefMsg(RefLiA, mtMsgList) = tt .
+	eq checkSubsetRefMsg(RefLiA, ( (@ App :: A :: B :: RefLiB @) $ MsgLiA ) ) = 
+		checkSubsetRefApp(RefLiA, RefLiB) and checkSubsetRefMsg(RefLiA, MsgLiA) .
+	
+	eq checkDestMsg(mtRefList, mtMsgList) = tt .
+	eq checkDestMsg(mtRefList, MsgLiA) = ff .
+	eq checkDestMsg(RefLiA, mtMsgList) = tt .
+	eq checkDestMsg(RefLiA, ( (@ App :: A :: B :: RefLiB @) $ MsgLiA )) = 
+		checkDestMsgApp(RefLiA, A) and checkDestMsg(RefLiA, MsgLiA) .
+
+	eq checkMsgTypeApp(mtMsgList) = tt .	
+	eq checkMsgTypeApp((@ MsgTA :: A :: B :: RefLiB @) $ MsgLiA) = 
+		(App ~MsgType MsgTA) and checkMsgTypeApp(MsgLiA) .
+
+	eq createAppMessage?(RefLiA, MsgLiB) = 
+		checkDestMsg(RefLiA, MsgLiB) and ( checkSubsetRefMsg(RefLiA, MsgLiB) and checkMsgTypeApp(MsgLiB) ) .
+
+	--- message list is empty and we have checked all messages by asserting B and C are equal
+	eq checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C, mtMsgList) = tt and (C ~iN B) .
+	--- message list is non-empty but we have already reached the end
+	eq checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C, MsgLiA) =  (lenML(MsgLiA) ~iN 0) and (C ~iN B) .
+	eq checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C, ((@ MsgTA :: A :: C :: RefLiH @) $ MsgLiA)) = (MapNatRefLiA[C] ~RL RefLiB) and checkReleaseRecvFormat(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, s C, MsgLiA) .
+	
+	eq checkMsgTypeReleaseRecv(mtMsgList) = tt .
+	eq checkMsgTypeReleaseRecv((@ MsgTA :: A :: B :: RefLiB @) $ MsgLiA) = 
+		(ReleaseRecv ~MsgType MsgTA) and checkMsgTypeReleaseRecv(MsgLiA) .
+
+	eq createReleaseRecvMessage?(AcA, A, MsgLiA) = checkMsgTypeReleaseRecv(MsgLiA) and checkReleaseRecvFormat(AcA, A, MsgLiA) .
 
 	--- Note that when we create a message the list of reference that can be
 	--- added to a message must be all references that an actor holds (accessible)
@@ -34,6 +108,11 @@ fmod SOUP is
 	eq spawnMultipleActors(N, M, B, ((A :: B -> C), RefLiA)) = 
 		spawn(s N, (s M :: s N -> B)) ; spawnMultipleActors(s N, s M , B, RefLiA) .
 endfm
+
+--- tt
+--- red checkMsgTypeReleaseRecv(mtMsgList) .
+--- ff
+--- red checkMsgTypeReleaseRecv((@ ReleaseRecv :: A:iNat :: RefLiB:ReferenceList @) $ (@ App :: A:iNat :: RefLiB:ReferenceList @)) .
 
 mod SOUP-STATE is
 	protecting SOUP .
@@ -44,61 +123,67 @@ mod SOUP-STATE is
 	vars AcA AcB : Actor .
 	vars MsgA : Msg .
 	vars MsgTypeA : MsgType .
-	vars MsgLiA : MsgList .
+	vars MsgLiA MsgLiB : MsgList .
 	vars SoupA : Soup .
 	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH RefLiI RefLiJ RefLiK RefLiL RefLiM RefLiN : ReferenceList . 
 	vars MapNatRefLiA MapNatRefLiB : Map{TrivAsiNat, TrivAsReferenceList} .
 	--- MsgType ActorList ReferenceList MsgList
 	
 	--- ########## RULES ##########
+	--- This creates an application message where we hre sending a subset of references from actor A to a target D
+	--- Conditions to be fufilled
+	--- 	1. new messages to be added must have valid destinations (checkDestMsg)
+	---		2. new messages to be added must have references which are a subset of A (checkSubsetRefMsg)
+	---		3. new messages to be added must have type App checkMsgType
+	crl [createAppMessage] : 
+		N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || MsgLiA 
+		=>
+			N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || MsgLiA $ MsgLiB
+			if createAppMessage?(RefLiA, MsgLiB) = tt .
+
+	--- This parses a ReleaseReq message generated by parsing an App message
+	--- releaseReferenceList will perform both release and updateInfo for all the references in the ReleaseReq message
+	--- In addition we need to create a bunch of releaseRecv messages
+	--- Conditions to be fufilled
+	---		1. new messages must be of type ReleaseRecv (checkMsgTypeReleaseRecv)
+	---		2. new messsages must contain the correct infomation
+	---		3. the number of ReleaseRecv messages must be equal to the new_sn - old_sn
+	crl [parseReleaseReq] :
+		N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || @ ReleaseReq :: A :: C :: RefLiH @ $ MsgLiA
+		=> N || releaseReferenceList(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, RefLiH) ; AcLiA || MsgLiA $ MsgLiB 
+		if createReleaseRecvMessage?(releaseReferenceList(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, RefLiH), s B, MsgLiB) = tt .
+	
+	--- crl [parseReleaseRecv] :
+
+	--- This parses an AckRelease message generated by a ReleaseRecv message
+	--- ackRelease is called on the actor to release the sn mapped to a reference list in our map
+	--- we then delete our message from the message list
+	--- TODO: THIS HAS NO SNAPSHO FUNCTIONALITY YET
+	rl [parseAckRelease] :
+		N || < i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA > ; AcLiA || @ AckRelease :: A :: C :: RefLiH @ $ MsgLiA
+		=>
+		N || ackRelease(< i: A | sn: B | r: RefLiA | dr: RefLiB | o: RefLiC | ro: RefLiD | m: RefLiE | tr: RefLiF | owr: RefLiG | oa: MapNatRefLiA >, C) ; AcLiA || MsgLiA .
+	
+	--- this may
+	--- 	1. create more App messages
+	---		2. spawn more actors
+	---		3. create release req messages
+	--- crl [parseApp] :
+
+	--- create ref rule
+	--- receive rule
+
+endm
+
+--- red initSoup .
+--- search [100] initSoup =>+ S:Soup .
+
 	--- rl [CreateAppMsgWithReachable] : N # M || AcLiA MsgLiA => N # M || AcLiA MsgLiA .
 	--- This creates an application message where we hre sending a subset of references from actor A to a target D
 	--- Note that the target D must be reachable from A
 	--- There are two cases
 	--- 	1. where we actually send the reference we are using to check a reachable actor
 	---		2. where we do not send the reference we are using to check a reachable actor
-	--- rl [CreateAppMsgWithReachable] : N # M || < i: A 
-	--- 										| sn: B 
-	--- 										| r: RefLiA, RefLiH 
-	--- 										| dr: RefLiB 
-	--- 										| o: RefLiC 
-	--- 										| ro: RefLiD 
-	--- 										| m: RefLiE	
-	--- 										| tr: RefLiF 
-	--- 										| owr: RefLiG 
-	--- 										| oa: MapNatRefLiA > ; AcLiA MsgLiA
-	--- 										=> N # M || 
-	--- 										< i: A 
-	--- 										| sn: B 
-	--- 										| r: RefLiA, RefLiH 
-	--- 										| dr: RefLiB 
-	--- 										| o: RefLiC 
-	--- 										| ro: RefLiD 
-	--- 										| m: RefLiE	
-	--- 										| tr: RefLiF 
-	--- 										| owr: RefLiG 
-	--- 										| oa: MapNatRefLiA > ; AcLiA (@ App :: A :: RefLiA :: RefLiA, RefLiH @) $ MsgLiA .
-	--- rl [CreateAppMsgNoReachable] : N # M || < i: A 
-	--- 										| sn: B 
-	--- 										| r: RefLiA, RefLiH 
-	--- 										| dr: RefLiB 
-	--- 										| o: RefLiC 
-	--- 										| ro: RefLiD 
-	--- 										| m: RefLiE	
-	--- 										| tr: RefLiF 
-	--- 										| owr: RefLiG 
-	--- 										| oa: MapNatRefLiA > ; AcLiA MsgLiA
-	--- 										=> N # M || 
-	--- 										< i: A 
-	--- 										| sn: B 
-	--- 										| r: RefLiA, RefLiH 
-	--- 										| dr: RefLiB 
-	--- 										| o: RefLiC 
-	--- 										| ro: RefLiD 
-	--- 										| m: RefLiE	
-	--- 										| tr: RefLiF 
-	--- 										| owr: RefLiG 
-	--- 										| oa: MapNatRefLiA > ; AcLiA (@ App :: A :: RefLiA :: RefLiH @) $ MsgLiA .
 
 	--- We pull an App message from the soup and operate on it
 	--- An App message can do any combination of the following things all at once
@@ -114,7 +199,7 @@ mod SOUP-STATE is
 
 	--- op fresh(_,_) : ActorList ActorList -> Pred .
 	--- eq fresh()
-	rl [testSpawn] : N # M || AcLiA MsgA $ MsgLiA => N # M || AcLiB:ActorList ; AcLiA MsgLiA .
+	--- rl [testSpawn] : N # M || AcLiA MsgA $ MsgLiA => N # M || AcLiB:ActorList ; AcLiA MsgLiA .
 --- 	--- rl [ParseAppReqReleaseOnly]
 --- 	--- rl [ParseAppNewAppOnly]
 
@@ -151,7 +236,6 @@ mod SOUP-STATE is
 --- 	--- release rule
 --- 	--- this will not only call the release op but also the update info as long as the reference we want to release
 --- 	--- exists in the actor we are trying to check
-endm
 
 --- mod SOUP-STOP is
 --- 	protecting SOUP .
@@ -165,14 +249,6 @@ endm
 --- 	rl [gen0] : rand => 0 .
 --- 	rl [gen1] : N => s N .
 --- endm
-
---- mod RAND-STOP is protecting RAND .
---- 	vars N : iNat .
---- 	rl [stop] : N => { N } .
---- endm
-
---- red initiNatSoup .
-search [100] initiNatSoup =>+ S:iNatSoup .
 
 --- eq spawnMultipleActors(N, M, B, ((A :: B -> C), RefLiA))
 

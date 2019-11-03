@@ -2,11 +2,11 @@ load util.maude
 
 fmod REFERENCE is protecting INAT .
 	--- ########## SORTS ##########
-	sorts Reference NeReferenceList ReferenceList .
+	sorts Reference NeReferenceList ReferenceList ReferenceListUnion .
 	--- ########## SUBSORTS ##########
 	subsorts Reference < NeReferenceList < ReferenceList .
 	--- ########## OPS ##########
-	--- op mtRef : -> Reference [ctor] .
+	op mtRefListUnion : -> ReferenceListUnion [ctor] .
 	op mtRefList : -> ReferenceList [ctor] .
 	--- References
 	--- x : A -> B, where x is a reference ID and A,B are actor IDs
@@ -18,13 +18,22 @@ fmod REFERENCE is protecting INAT .
 	op _,_ : ReferenceList NeReferenceList -> NeReferenceList [ctor ditto] .
 	--- This removes the references in the first reference list from the second reference list
 	op remList(_,_) : ReferenceList ReferenceList -> ReferenceList .
-	--- Performs set union on reference lists based upon their membership
-	op _U_ : ReferenceList ReferenceList -> ReferenceList .
+	--- This operate denotes the 3 possible things we have in on ack
+	--- releasing U created U sent
+	op _U_U_ : ReferenceList ReferenceList ReferenceList -> ReferenceListUnion [ctor] .
 	--- This returns the length of a reference list
 	op lenRL(_) : ReferenceList -> iNat .
+	--- Given two ReferenceLists A, B check that B's destinations are a subset of
+	--- A's destinations
+	op checkSubsetRefApp(_,_) : ReferenceList ReferenceList -> Pred .
+	op checkSubsetRefAppHelper(_,_) : ReferenceList Reference -> Pred .
+	--- checks if a reference is in a reference list
+	op _in_ : Reference ReferenceList -> Pred .
+	--- checks if two reference lists are equal
+	op _~RL_ : ReferenceList ReferenceList -> Pred .
 
 	--- ########## VARS ##########
-	vars x A B C D : iNat .
+	vars x A B C D E F : iNat .
 	vars RefA RefB : Reference .
 	vars RefLiA RefLiB RefLiC RefLiD RefLiE RefLiF RefLiG RefLiH : ReferenceList . 
 
@@ -41,14 +50,32 @@ fmod REFERENCE is protecting INAT .
 	eq remList((RefA, RefLiA), (RefLiB, RefA, RefLiC)) = remList(RefLiA, (RefLiB, RefLiC)) . --- remove case
 	eq remList((RefA, RefLiA), (RefLiB, RefB, RefLiC)) = RefB, remList(RefLiA, (RefLiB, RefLiC)) . --- doesn't exist recreate
 
-	eq mtRefList U mtRefList = mtRefList .
-	eq RefLiA U mtRefList = RefLiA .
-	eq mtRefList U RefLiA = RefLiA .
-	eq (RefA, RefLiA) U (RefA, RefLiB) = RefA, (RefLiA U RefLiB) .
-	eq (RefA, RefLiA) U (RefB, RefLiB) = RefA, RefB, (RefLiA U RefLiB) .
+	--- eq mtRefList U mtRefList = mtRefList .
+	--- eq RefLiA U mtRefList = RefLiA .
+	--- eq mtRefList U RefLiA = RefLiA .
+	--- eq (RefA, RefLiA) U (RefA, RefLiB) = RefA, (RefLiA U RefLiB) .
+	--- eq (RefA, RefLiA) U (RefB, RefLiB) = RefA, RefB, (RefLiA U RefLiB) .
 
 	eq lenRL(mtRefList) = 0 .
 	eq lenRL(RefA, RefLiA) = s lenRL(RefLiA) .
+
+	eq checkSubsetRefApp(mtRefList, mtRefList) = tt .
+	eq checkSubsetRefApp(RefLiA, mtRefList) = tt .
+	eq checkSubsetRefApp(mtRefList, RefLiB) = ff .
+	eq checkSubsetRefApp(RefLiA, (RefA , RefLiB)) = 
+		checkSubsetRefAppHelper(RefLiA, RefA) and checkSubsetRefApp(RefLiA, RefLiB) .
+	eq checkSubsetRefAppHelper(mtRefList, RefA) = ff .
+	eq checkSubsetRefAppHelper( ( (A :: B -> C), RefLiA ) , (D :: E -> F) ) =
+		(C ~iN F) or checkSubsetRefAppHelper(RefLiA, (D :: E -> F) ) .
+
+	eq RefA in mtRefList = ff .
+	eq RefA in (RefLiB, RefA, RefLiC) = tt .
+	eq RefA in (RefLiB, RefB, RefLiC) = ff .
+
+	eq mtRefList ~RL mtRefList = tt .
+	eq mtRefList ~RL RefLiA = ff .
+	eq RefLiA ~RL mtRefList = ff .
+	eq ((A :: B -> C) , RefLiA) ~RL ((D :: E -> F) , RefLiB) = ((A ~iN D) and ((B ~iN E) and (C ~iN F))) and (RefLiA ~RL RefLiB) .
 endfm
 
 --- red mtRefList, (0 :: 0 -> 0) .
@@ -79,3 +106,38 @@ endfm
 --- red lenRL(0 :: 0 -> 0) .
 --- red lenRL(mtRefList, (0 :: 0 -> 0)) .
 --- red lenRL((0 :: 0 -> 0), mtRefList, (s 0 :: s 0 -> s 0)) .
+
+--- --- tt
+--- red checkSubsetRefApp(mtRefList, mtRefList) .
+--- --- tt
+--- red checkSubsetRefApp((0 :: 0 -> 0), mtRefList) .
+--- --- ff
+--- red checkSubsetRefApp(mtRefList, (0 :: 0 -> 0)) .
+--- --- tt
+--- red checkSubsetRefApp( ( (0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0) ) , mtRefList) .
+--- --- ff
+--- red checkSubsetRefApp(mtRefList, ( (0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0) ) ) .
+--- --- tt
+--- red checkSubsetRefApp( ( (0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0) ) , (s s s 0 :: s 0 -> 0) ) .
+--- --- ff
+--- red checkSubsetRefApp( ( (0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0) ) , ((s s s s 0 :: s 0 -> s s s 0) , (s s s 0 :: s 0 -> 0)) ) .
+--- --- tt
+--- red checkSubsetRefApp( ( (0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0) ) , ((s s s 0 :: s 0 -> 0), (s s s s 0 :: s s s s 0 -> s s 0)) ) .
+
+--- --- ff
+--- red (0 :: 0 -> 0) in mtRefList .
+--- --- ff
+--- red (0 :: 0 -> 0) in ((s 0 :: s 0 -> s 0) , (s s 0 :: s s 0 -> s s 0)) .
+--- red (0 :: 0 -> 0) in (s 0 :: s 0 -> s 0) .
+--- --- tt
+--- red (0 :: 0 -> 0) in ( (0 :: 0 -> 0) , (s s 0 :: s s 0 -> s s 0)) .
+--- red (0 :: 0 -> 0) in ( (s s 0 :: s s 0 -> s s 0), (0 :: 0 -> 0) ) .
+
+--- --- tt
+--- red mtRefList ~RL mtRefList .
+--- red (0 :: 0 -> 0) ~RL (0 :: 0 -> 0) .
+--- red (s 0 :: 0 -> 0) , (0 :: 0 -> 0) ~RL (0 :: 0 -> 0) , (s 0 :: 0 -> 0) .
+--- --- ff
+--- red (0 :: 0 -> 0) , (s 0 :: 0 -> 0) ~RL (0 :: 0 -> 0) .
+--- red A:Reference ~RL mtRefList .
+--- red mtRefList ~RL A:Reference .

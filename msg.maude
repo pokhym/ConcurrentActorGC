@@ -11,6 +11,7 @@ fmod MSG is protecting ACTOR .
 	--- Message Types
 	op App : -> MsgType .
 	op ReleaseReq : -> MsgType .
+	op ReleaseRecv : -> MsgType .
 	op AckRelease : -> MsgType .
 	--- Messages
 	--- The three types are App, Req_Release, and Ack_Release. 
@@ -21,18 +22,61 @@ fmod MSG is protecting ACTOR .
 	--- - Spawn new actors; AND
 	--- - Create new Req_Release messages.
 	--- TODO: This means that we need newActor to handle cases where ActorList is MT
-	--- MsgType, The origin of the msg, a list of references which we use to generate targets of a message
-	--- and a list of references
-	op @_::_::_::_@ : MsgType iNat ReferenceList ReferenceList -> Msg [ctor] .
+	--- MsgType, the destination of the msg, the sn, and a reference list
+	op @_::_::_::_@ : MsgType iNat iNat ReferenceList -> Msg [ctor] .
 	
 	op _$_ : MsgList MsgList -> MsgList [ctor assoc id: mtMsgList] .
 	op _$_ : NeMsgList MsgList -> MsgList [ctor ditto] .
 	op _$_ : MsgList NeMsgList -> MsgList [ctor ditto] .
 
+	--- returns tt if both msgTypes provided are the same ff otherwise
+	op _~MsgType_ : MsgType MsgType -> Pred [comm] .
+
+	op lenML(_) : MsgList -> iNat .
+
+	--- This checks that a destination N occurs in a specific reference in the provided
+	--- reference list
+	---	X :: A -> B, B = tt, X :: A -> B, A = ff
+	op checkDestMsgApp(_,_) : ReferenceList iNat -> Pred .
+
 	--- ########## VARS ##########
+	vars A B C D : iNat .
+	vars RefA : Reference .
+	vars RefLiA : ReferenceList .
 	vars MsgA : Msg .
-	vars MsgTA : MsgType .
+	vars MsgTA MsgTB : MsgType .
 	vars MsgLiA : MsgList .
 
 	--- ########## EQS ##########
+	eq App ~MsgType App = tt .
+	eq ReleaseReq ~MsgType ReleaseReq = tt .
+	eq AckRelease ~MsgType AckRelease = tt .
+	eq ReleaseRecv ~MsgType ReleaseRecv = tt .
+	eq MsgTA ~MsgType MsgTB = ff [owise] .
+	
+	eq checkDestMsgApp(mtRefList, B) = ff .
+	eq checkDestMsgApp(((A :: B -> C), RefLiA), D) =
+		(C ~iN D) or checkDestMsgApp(RefLiA, D) .
+
+	eq lenML(mtMsgList) = 0 .
+	eq lenML(MsgA $ MsgLiA) = s lenML(MsgLiA) .
 endfm
+
+--- --- ff
+--- red checkDestMsgApp(mtRefList, 0) .
+--- --- tt
+--- red checkDestMsgApp(((0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0)), 0) .
+--- --- tt
+--- red checkDestMsgApp(((0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0)), s 0) .
+--- --- tt
+--- red checkDestMsgApp(((0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0)), s s 0) .
+--- --- ff
+--- red checkDestMsgApp(((0 :: 0 -> 0), (s 0 :: s 0 -> s 0), (s s 0 :: s s 0 -> s s 0)), s s s 0) .
+
+--- --- tt
+--- red App ~MsgType App .
+--- red ReleaseReq ~MsgType ReleaseReq .
+--- red AckRelease ~MsgType AckRelease .
+--- --- ff
+--- red App ~MsgType ReleaseReq .
+--- red ReleaseReq ~MsgType App .

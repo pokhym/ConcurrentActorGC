@@ -4,13 +4,25 @@ fmod PRED is
 	--- ########## SUBSORTS ##########
 	--- ########## OPS ##########
 	op _and_ : Pred Pred -> Pred .
+	op _or_ : Pred Pred -> Pred .
 	op tt : -> Pred [ctor] .
 	op ff : -> Pred [ctor] .
+	op _~_ : Pred Pred -> Pred [comm] .
 	--- ########## VARS ##########
 	vars P1 P2 : Pred .
     --- ########## EQS ##########
 	eq P1 and ff = ff .
     eq P1 and tt = P1 .
+
+	eq tt or ff = tt .
+	eq ff or tt = tt .
+	eq tt or tt = tt .
+	eq ff or ff = ff .
+
+	eq tt ~ tt = tt .
+	eq tt ~ ff = ff .
+	eq ff ~ tt = ff .
+	eq ff ~ ff = ff .
 endfm
 
 fmod INAT is
